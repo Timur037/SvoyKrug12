@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { COLORS, serifStyle, sansStyle } from '../theme'
@@ -7,45 +7,8 @@ import { TabBar } from '../components/TabBar'
 import { Seats } from '../components/Seats'
 import { PriceChip } from '../components/PriceChip'
 import { haptic } from '../lib/telegram'
-
-const CIRCLES = [
-  {
-    id: 'pokrovka',
-    kind: 'УЖИН · ПЯТНИЦА',
-    timeShort: '19:30',
-    title: 'лёгкий вечер на Покровке',
-    hint: 'тёмное вино, разговоры до полуночи',
-    price: 450,
-    seats: 6,
-    taken: 4,
-    tilt: -2.2,
-    photo: 'https://images.unsplash.com/photo-1543007630-9710e4a00a20?w=900&q=80&auto=format&fit=crop',
-  },
-  {
-    id: 'coffee',
-    kind: 'КОФЕ · СУББОТА',
-    timeShort: '11:00',
-    title: 'медленное утро у Чистых',
-    hint: 'без планов, только свет и разговоры',
-    price: 0,
-    seats: 5,
-    taken: 3,
-    tilt: 1.4,
-    photo: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=900&q=80&auto=format&fit=crop',
-  },
-  {
-    id: 'evening',
-    kind: 'ВЕЧЕР · ВОСКРЕСЕНЬЕ',
-    timeShort: '20:00',
-    title: 'тихая комната у Чистых',
-    hint: 'свечи, пластинки, шесть голосов',
-    price: 600,
-    seats: 6,
-    taken: 5,
-    tilt: -0.6,
-    photo: 'https://images.unsplash.com/photo-1530062845289-9109b2c9c868?w=900&q=80&auto=format&fit=crop',
-  },
-]
+import { fetchCircles } from '../lib/db'
+import type { DbCircle } from '../lib/db'
 
 const MOODS = [
   { id: 'live', label: 'оживлённо', bg: COLORS.tomato, fg: COLORS.cream },
@@ -56,7 +19,12 @@ const MOODS = [
 
 export function HomeScreen() {
   const [activeMood, setActiveMood] = useState<string>('live')
+  const [circles, setCircles] = useState<DbCircle[]>([])
   const navigate = useNavigate()
+
+  useEffect(() => {
+    fetchCircles().then(setCircles).catch(console.error)
+  }, [])
 
   const root: CSSProperties = {
     position: 'relative',
@@ -165,7 +133,7 @@ export function HomeScreen() {
 
       {/* Stacked card deck */}
       <div style={{ flex: 1, position: 'relative', margin: '14px 22px 0', paddingBottom: 90 }}>
-        {CIRCLES.map((c, i) => (
+        {circles.map((c, i) => (
           <button
             key={c.id}
             onClick={() => openCircle(c.id)}
@@ -187,10 +155,10 @@ export function HomeScreen() {
               textAlign: 'left',
               cursor: 'pointer',
             }}
-            aria-label={`${c.title}, ${c.kind} ${c.timeShort}`}
+            aria-label={`${c.title}, ${c.kind} ${c.time_short}`}
           >
             <img
-              src={c.photo}
+              src={c.photo ?? ''}
               alt=""
               style={{
                 position: 'absolute',
