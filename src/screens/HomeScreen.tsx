@@ -121,7 +121,7 @@ export function HomeScreen() {
       })
   }, [])
 
-  const displayCircles = circles.length > 0 ? circles : MOCK_CIRCLES
+  const displayCircles = MOCK_CIRCLES
 
   const greeting = getGreeting(user?.name ?? 'гость')
   const timeGradient = getTimeGradient(new Date().getHours())
