@@ -16,8 +16,6 @@ import { useUser } from '../context/UserContext'
 const MOODS = [
   { id: 'live', label: 'оживлённо', bg: COLORS.tomato, fg: COLORS.cream },
   { id: 'calm', label: 'спокойно', bg: COLORS.ink, fg: COLORS.cream },
-  { id: 'theme', label: 'с темой', bg: '#fff', fg: COLORS.ink },
-  { id: 'morning', label: 'утро', bg: '#fff', fg: COLORS.ink },
 ] as const
 
 type GreetingPart = { lead: string; name: string }
