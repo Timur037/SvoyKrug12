@@ -35,11 +35,3 @@ export interface TelegramUser {
   language_code?: string
   photo_url?: string
 }
-
-export interface AppUser {
-  id: string
-  name: string
-  age: number
-  city: string
-  vibes: string[]
-}
