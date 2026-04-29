@@ -10,6 +10,7 @@ import { PageTransition } from '../components/PageTransition'
 import { haptic } from '../lib/telegram'
 import { fetchCircles } from '../lib/db'
 import type { DbCircle } from '../lib/db'
+import { MOCK_CIRCLES } from '../lib/mockCircles'
 import { useUser } from '../context/UserContext'
 
 const MOODS = [
@@ -18,65 +19,6 @@ const MOODS = [
   { id: 'theme', label: 'с темой', bg: '#fff', fg: COLORS.ink },
   { id: 'morning', label: 'утро', bg: '#fff', fg: COLORS.ink },
 ] as const
-
-const MOCK_CIRCLES: DbCircle[] = [
-  {
-    id: 'mock-1',
-    kind: 'УЖИН',
-    time_short: 'сегодня в 20:00',
-    title: 'Ужин у камина',
-    hint: 'ресторан Savva · Тверская',
-    place: 'Savva, Тверская',
-    price: 2500,
-    seats: 8,
-    taken: 5,
-    tilt: -1.2,
-    bg: 'photo',
-    photo: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=700&fit=crop&q=80',
-  },
-  {
-    id: 'mock-2',
-    kind: 'КОФЕ',
-    time_short: 'завтра в 10:30',
-    title: 'Утренний кофе',
-    hint: 'кофейня Kuznya · Красный Октябрь',
-    place: 'Kuznya, Балчуг',
-    price: 800,
-    seats: 6,
-    taken: 2,
-    tilt: 1.0,
-    bg: 'photo',
-    photo: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=700&fit=crop&q=80',
-  },
-  {
-    id: 'mock-3',
-    kind: 'ВЕЧЕР',
-    time_short: 'в пятницу в 19:00',
-    title: 'Вино и идеи',
-    hint: 'тема: жизнь в большом городе',
-    place: 'Blanc, Пресненская',
-    price: 1800,
-    seats: 10,
-    taken: 7,
-    tilt: 0.6,
-    bg: 'photo',
-    photo: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=700&fit=crop&q=80',
-  },
-  {
-    id: 'mock-4',
-    kind: 'ПРОГУЛКА',
-    time_short: 'в субботу в 10:00',
-    title: 'Парк и разговоры',
-    hint: 'Нескучный сад · у фонтана',
-    place: 'Нескучный сад',
-    price: 500,
-    seats: 12,
-    taken: 4,
-    tilt: -0.8,
-    bg: 'photo',
-    photo: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=700&fit=crop&q=80',
-  },
-]
 
 type GreetingPart = { lead: string; name: string }
 

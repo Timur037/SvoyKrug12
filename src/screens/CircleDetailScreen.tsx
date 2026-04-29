@@ -15,6 +15,7 @@ import {
   type DbCircle,
   type DbMeetup,
 } from '../lib/db'
+import { MOCK_CIRCLES, MOCK_MEETUPS } from '../lib/mockCircles'
 
 export function CircleDetailScreen() {
   const navigate = useNavigate()
@@ -40,6 +41,15 @@ export function CircleDetailScreen() {
       navigate(-1)
       return
     }
+    // Use mock data for demo circles
+    if (circleId.startsWith('mock-')) {
+      const mockCircle = MOCK_CIRCLES.find((c) => c.id === circleId) ?? null
+      const mockMeetup = MOCK_MEETUPS[circleId]
+      setCircle(mockCircle)
+      setMeetups(mockMeetup ? [mockMeetup] : [])
+      setLoaded(true)
+      return
+    }
     Promise.all([fetchCircleById(circleId), fetchMeetupsByCircle(circleId)])
       .then(([c, ms]) => {
         setCircle(c)
@@ -52,15 +62,46 @@ export function CircleDetailScreen() {
   const upcomingMeetup = meetups.find((m) => m.status === 'upcoming') ?? null
 
   useEffect(() => {
-    if (!user || !upcomingMeetup) return
+    if (!upcomingMeetup) return
+    // Mock mode: don't query Supabase for bookings
+    if (circleId?.startsWith('mock-')) return
+    if (!user) return
     fetchBooking(user.id, upcomingMeetup.id)
       .then(setBookingId)
       .catch(console.error)
-  }, [user, upcomingMeetup])
+  }, [user, upcomingMeetup, circleId])
 
   async function handleBook() {
-    if (!user || !upcomingMeetup || booking) return
+    if (!upcomingMeetup || booking) return
     haptic('medium')
+    // Mock mode: simulate booking without Supabase
+    if (circleId?.startsWith('mock-')) {
+      setBooking(true)
+      await new Promise((r) => setTimeout(r, 600))
+      if (bookingId) {
+        setBookingId(null)
+        setMeetups((prev) =>
+          prev.map((m) =>
+            m.id === upcomingMeetup.id ? { ...m, taken: Math.max(0, m.taken - 1) } : m,
+          ),
+        )
+      } else {
+        setBookingId('mock-booking')
+        setMeetups((prev) =>
+          prev.map((m) =>
+            m.id === upcomingMeetup.id ? { ...m, taken: m.taken + 1 } : m,
+          ),
+        )
+        setToast(true)
+        setTimeout(() => {
+          setToast(false)
+          navigate('/waiting')
+        }, 1800)
+      }
+      setBooking(false)
+      return
+    }
+    if (!user) return
     setBooking(true)
     try {
       if (bookingId) {
