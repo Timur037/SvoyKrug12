@@ -2,26 +2,72 @@ import { useState, useEffect, useMemo, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { COLORS, serifStyle, sansStyle } from '../theme'
 import { Grain } from '../components/Grain'
+import { PageTransition } from '../components/PageTransition'
 import { haptic } from '../lib/telegram'
+import { fetchUpcomingMeetup, type DbMeetup } from '../lib/db'
+
+function dayWord(n: number): string {
+  const mod10 = n % 10
+  const mod100 = n % 100
+  if (mod10 === 1 && mod100 !== 11) return 'день'
+  if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return 'дня'
+  return 'дней'
+}
+
+function hourWord(n: number): string {
+  const mod10 = n % 10
+  const mod100 = n % 100
+  if (mod10 === 1 && mod100 !== 11) return 'час'
+  if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return 'часа'
+  return 'часов'
+}
+
+function weekdayRu(date: Date): string {
+  const days = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота']
+  return days[date.getDay()] ?? ''
+}
 
 export function BreathingScreen() {
   const navigate = useNavigate()
   const [now, setNow] = useState<number>(() => Date.now())
   const [showReassurance, setShowReassurance] = useState<boolean>(false)
+  const [meetup, setMeetup] = useState<DbMeetup | null>(null)
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 60_000)
     return () => clearInterval(id)
   }, [])
 
-  // Target: 2 days + 4 hours from initial mount.
-  const target = useMemo<number>(() => Date.now() + (2 * 24 + 4) * 3600 * 1000, [])
+  useEffect(() => {
+    fetchUpcomingMeetup().then(setMeetup).catch(console.error)
+  }, [])
+
+  // Real target from meetup, or fallback to +52h from mount
+  const target = useMemo<number>(() => {
+    if (meetup?.scheduled_at) {
+      return new Date(meetup.scheduled_at).getTime()
+    }
+    return Date.now() + (2 * 24 + 4) * 3600 * 1000
+  }, [meetup])
+
   const ms = Math.max(0, target - now)
   const days = Math.floor(ms / 86400000)
   const hours = Math.floor((ms % 86400000) / 3600000)
-  const total = (2 * 24 + 4) * 3600
-  const passed = total - (days * 24 + hours) * 3600
-  const pct = Math.min(1, Math.max(0, passed / total))
+
+  // Progress for sundial line (0→1 as event approaches, show last 72h)
+  const windowMs = 72 * 3600 * 1000
+  const timeUntil = target - now
+  const pct = timeUntil <= 0 ? 1 : Math.max(0, 1 - timeUntil / windowMs)
+
+  const dayLabel = meetup?.scheduled_at ? weekdayRu(new Date(meetup.scheduled_at)) : 'пятница'
+  const circleLabel = meetup?.title ?? 'ваш круг'
+  const placeRevealTime = meetup?.scheduled_at
+    ? (() => {
+        const d = new Date(meetup.scheduled_at)
+        d.setHours(d.getHours() - 6)
+        return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`
+      })()
+    : '16:30'
 
   const root: CSSProperties = {
     position: 'relative',
@@ -53,22 +99,8 @@ export function BreathingScreen() {
     WebkitBackdropFilter: 'blur(8px)',
   }
 
-  function dayWord(n: number): string {
-    const mod10 = n % 10
-    const mod100 = n % 100
-    if (mod10 === 1 && mod100 !== 11) return 'день'
-    if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return 'дня'
-    return 'дней'
-  }
-  function hourWord(n: number): string {
-    const mod10 = n % 10
-    const mod100 = n % 100
-    if (mod10 === 1 && mod100 !== 11) return 'час'
-    if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return 'часа'
-    return 'часов'
-  }
-
   return (
+    <PageTransition>
     <div style={root}>
       <Grain opacity={0.22} />
 
@@ -78,7 +110,7 @@ export function BreathingScreen() {
         </svg>
       </button>
 
-      {/* Sundial line */}
+      {/* Sundial line — grows as event approaches */}
       <div style={{
         position: 'absolute',
         left: '10%',
@@ -102,7 +134,6 @@ export function BreathingScreen() {
         width: '100%',
         boxSizing: 'border-box',
       }}>
-        {/* tiny label */}
         <div style={{
           ...sansStyle,
           fontSize: 11,
@@ -112,35 +143,27 @@ export function BreathingScreen() {
           textTransform: 'uppercase',
           marginBottom: 32,
         }}>
-          ваш круг · пятница
+          {circleLabel} · {dayLabel}
         </div>
 
-        {/* headline */}
-        <h1 style={{
-          ...serifStyle,
-          margin: 0,
-          fontSize: 44,
-          lineHeight: 1.05,
-          color: COLORS.ink,
-          letterSpacing: '-0.02em',
-        }}>
-          место откроется
+        <h1 style={{ ...serifStyle, margin: 0, fontSize: 44, lineHeight: 1.05, color: COLORS.ink, letterSpacing: '-0.02em' }}>
+          {ms === 0 ? 'вечер уже начался' : 'место откроется'}
         </h1>
 
-        {/* countdown */}
-        <div style={{
-          ...serifStyle,
-          fontVariantNumeric: 'tabular-nums',
-          color: COLORS.tomato,
-          fontSize: 44,
-          lineHeight: 1.1,
-          marginTop: 6,
-          letterSpacing: '-0.02em',
-        }}>
-          через {days} {dayWord(days)} {hours} {hourWord(hours)}
-        </div>
+        {ms > 0 && (
+          <div style={{
+            ...serifStyle,
+            fontVariantNumeric: 'tabular-nums',
+            color: COLORS.tomato,
+            fontSize: 44,
+            lineHeight: 1.1,
+            marginTop: 6,
+            letterSpacing: '-0.02em',
+          }}>
+            {days > 0 ? `через ${days} ${dayWord(days)} ${hours} ${hourWord(hours)}` : `через ${hours} ${hourWord(hours)}`}
+          </div>
+        )}
 
-        {/* hint */}
         <div style={{
           ...sansStyle,
           fontSize: 13,
@@ -153,7 +176,6 @@ export function BreathingScreen() {
           вы получите адрес, когда круг будет готов выйти из дома.
         </div>
 
-        {/* CTA */}
         <button
           style={{
             marginTop: 32,
@@ -190,7 +212,6 @@ export function BreathingScreen() {
           {showReassurance ? 'свернуть' : 'что если я не смогу прийти?'}
         </button>
 
-        {/* Inline reassurance — expands below in cream bg */}
         {showReassurance && (
           <div style={{
             marginTop: 18,
@@ -202,24 +223,23 @@ export function BreathingScreen() {
             width: '100%',
             boxSizing: 'border-box',
           }}>
-            <div style={{
-              ...serifStyle,
-              fontSize: 22,
-              lineHeight: 1.15,
-              color: COLORS.ink,
-              marginBottom: 10,
-            }}>
+            <div style={{ ...serifStyle, fontSize: 22, lineHeight: 1.15, color: COLORS.ink, marginBottom: 10 }}>
               ничего страшного.
             </div>
-            <p style={{
-              ...sansStyle,
-              fontSize: 13,
-              color: COLORS.inkSoft,
-              lineHeight: 1.6,
-              margin: 0,
-            }}>
+            <p style={{ ...sansStyle, fontSize: 13, color: COLORS.inkSoft, lineHeight: 1.6, margin: 0 }}>
               напишите за 2 часа до начала — мы тихо передадим место кому-то ещё. без штрафов и обиды. круг подождёт вас в следующий раз.
             </p>
+            <div style={{
+              marginTop: 12,
+              padding: '10px 14px',
+              borderRadius: 12,
+              background: '#fff',
+              ...sansStyle,
+              fontSize: 12,
+              color: COLORS.inkSoft,
+            }}>
+              адрес откроется в <span style={{ color: COLORS.tomato, fontWeight: 700 }}>{placeRevealTime}</span> в день встречи
+            </div>
             <button
               style={{
                 marginTop: 14,
@@ -241,5 +261,6 @@ export function BreathingScreen() {
         )}
       </div>
     </div>
+    </PageTransition>
   )
 }

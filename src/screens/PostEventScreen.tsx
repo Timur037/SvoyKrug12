@@ -1,33 +1,59 @@
-import { useState, type CSSProperties } from 'react'
+import { useState, useEffect, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { COLORS, serifStyle, sansStyle } from '../theme'
 import { Grain } from '../components/Grain'
 import { haptic } from '../lib/telegram'
+import { useUser } from '../context/UserContext'
+import { fetchBooking, saveMoodToBooking } from '../lib/db'
 
-interface PersonTile {
+interface Mood {
   id: string
+  emoji: string
   label: string
-  color: string
-  fg: string
-  border?: boolean
-  you?: boolean
 }
 
-const PEOPLE: PersonTile[] = [
-  { id: 'a', label: 'редактор, 28', color: COLORS.cream2, fg: COLORS.ink },
-  { id: 'b', label: 'переехала',     color: COLORS.tomato, fg: COLORS.cream },
-  { id: 'c', label: 'ходит в горы',  color: '#fff',        fg: COLORS.ink,   border: true },
-  { id: 'd', label: 'историк, 31',   color: COLORS.cream2, fg: COLORS.ink },
-  { id: 'e', label: 'пишет тихо',    color: COLORS.ink,    fg: COLORS.cream },
-  { id: 'f', label: 'вы',            color: COLORS.tomato, fg: COLORS.cream, you: true },
+const MOODS: Mood[] = [
+  { id: 'calm',      emoji: '😌', label: 'спокойно' },
+  { id: 'lively',   emoji: '🔥', label: 'оживлённо' },
+  { id: 'celebrate', emoji: '🥂', label: 'праздник' },
+  { id: 'cosy',     emoji: '🌙', label: 'уютно' },
+  { id: 'special',  emoji: '✨', label: 'особенный' },
 ]
-
-const MOODS = ['тихо', 'тепло', 'хочу ещё'] as const
 
 export function PostEventScreen() {
   const navigate = useNavigate()
-  const [mood, setMood] = useState<number>(1)
-  const [thanked, setThanked] = useState<Set<string>>(new Set())
+  const { user } = useUser()
+  const [moodId, setMoodId] = useState<string>('cosy')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [bookingId, setBookingId] = useState<string | null>(null)
+
+  const meetupId = (() => {
+    try { return localStorage.getItem('svoy_krug_review_meetup') } catch { return null }
+  })()
+
+  useEffect(() => {
+    if (!user || !meetupId) return
+    fetchBooking(user.id, meetupId)
+      .then(setBookingId)
+      .catch(console.error)
+  }, [user, meetupId])
+
+  async function handleSave() {
+    haptic('medium')
+    if (bookingId && !saving) {
+      setSaving(true)
+      try {
+        await saveMoodToBooking(bookingId, MOODS.find((m) => m.id === moodId)?.label ?? moodId)
+        setSaved(true)
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setSaving(false)
+      }
+    }
+    navigate('/home')
+  }
 
   const root: CSSProperties = {
     position: 'relative',
@@ -43,7 +69,7 @@ export function PostEventScreen() {
     top: 0,
     left: 0,
     right: 0,
-    height: 220,
+    height: 260,
     background:
       'radial-gradient(ellipse at 50% -20%, rgba(244,201,93,0.55) 0%, rgba(244,201,93,0.18) 40%, rgba(245,239,230,0) 75%)',
     pointerEvents: 'none',
@@ -68,16 +94,6 @@ export function PostEventScreen() {
     WebkitBackdropFilter: 'blur(8px)',
   }
 
-  function toggleThanks(id: string) {
-    haptic('light')
-    setThanked((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
   return (
     <div style={root}>
       <Grain opacity={0.28} />
@@ -91,164 +107,82 @@ export function PostEventScreen() {
 
       <div style={{ position: 'relative', zIndex: 5, padding: '120px 24px 60px' }}>
 
-        <div style={{
-          ...sansStyle,
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: '0.18em',
-          color: COLORS.tomato,
-          textTransform: 'uppercase',
-        }}>
-          вечер · вчера
+        <div style={{ ...sansStyle, fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: COLORS.tomato, textTransform: 'uppercase' }}>
+          воспоминание · вчера
         </div>
 
-        <h1 style={{ margin: '12px 0 0', fontSize: 44, lineHeight: 1.0, letterSpacing: '-0.02em', color: COLORS.ink }}>
-          <span style={serifStyle}>как было?</span>
+        <h1 style={{ ...serifStyle, margin: '14px 0 0', fontSize: 44, lineHeight: 1.0, letterSpacing: '-0.02em', color: COLORS.ink }}>
+          тот вечер.
         </h1>
 
-        <p style={{ ...sansStyle, fontSize: 14, color: COLORS.inkSoft, marginTop: 12, lineHeight: 1.5, maxWidth: 320 }}>
-          один штрих — и вечер закроется. это влияет на следующий круг.
+        <p style={{ ...sansStyle, fontSize: 14, color: COLORS.inkSoft, marginTop: 14, lineHeight: 1.5, maxWidth: 320 }}>
+          один штрих — и круг закроется. это влияет на следующий вечер.
         </p>
 
-        {/* Mood slider */}
+        {/* Mood picker */}
         <div style={{ marginTop: 36 }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            ...sansStyle,
-            fontSize: 12,
-            fontWeight: 600,
-            color: COLORS.inkSoft,
-            marginBottom: 10,
-            padding: '0 4px',
-          }}>
-            {MOODS.map((m, i) => (
-              <span
-                key={m}
-                style={{
-                  color: mood === i ? COLORS.tomato : COLORS.inkSoft,
-                  transition: 'color 200ms',
-                }}
-              >
-                {m}
-              </span>
-            ))}
+          <div style={{ ...sansStyle, fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: COLORS.inkSoft, textTransform: 'uppercase', marginBottom: 14 }}>
+            настроение вечера
           </div>
-
-          <div style={{
-            position: 'relative',
-            height: 44,
-            background: '#fff',
-            borderRadius: 999,
-            border: '1px solid rgba(26,22,18,0.06)',
-            display: 'flex',
-            alignItems: 'center',
-            padding: 4,
-          }}>
-            {MOODS.map((_, i) => (
-              <button
-                key={i}
-                style={{
-                  flex: 1,
-                  height: 36,
-                  borderRadius: 999,
-                  background: mood === i ? COLORS.tomato : 'transparent',
-                  color: mood === i ? COLORS.cream : COLORS.inkSoft,
-                  ...sansStyle,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  transition: 'all 220ms ease',
-                }}
-                onClick={() => { haptic('light'); setMood(i) }}
-                aria-label={MOODS[i]}
-              >
-                {mood === i ? MOODS[i] : '·'}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* People to thank */}
-        <div style={{ marginTop: 36 }}>
-          <div style={{
-            ...sansStyle,
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.14em',
-            color: COLORS.inkSoft,
-            textTransform: 'uppercase',
-            marginBottom: 14,
-          }}>
-            кому скажете спасибо
-          </div>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 10,
-          }}>
-            {PEOPLE.map((p) => {
-              const active = thanked.has(p.id)
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'space-between', flexWrap: 'wrap' }}>
+            {MOODS.map((m) => {
+              const active = moodId === m.id
               return (
                 <button
-                  key={p.id}
-                  onClick={() => toggleThanks(p.id)}
-                  disabled={p.you}
+                  key={m.id}
+                  onClick={() => { haptic('light'); setMoodId(m.id) }}
+                  aria-label={m.label}
+                  aria-pressed={active}
                   style={{
-                    aspectRatio: '1 / 1',
+                    flex: '1 1 60px',
+                    minWidth: 60,
+                    padding: '14px 6px 10px',
                     borderRadius: 18,
-                    background: p.color,
-                    color: p.fg,
-                    border: p.border ? '1px solid rgba(26,22,18,0.12)' : 'none',
-                    padding: 10,
+                    background: active ? '#fff' : 'rgba(255,255,255,0.55)',
+                    border: active ? `2px solid ${COLORS.tomato}` : '2px solid rgba(26,22,18,0.06)',
+                    boxShadow: active ? '0 10px 24px rgba(232,71,44,0.18)' : '0 4px 10px rgba(26,22,18,0.04)',
+                    transform: active ? 'scale(1.06)' : 'scale(1)',
+                    transition: 'transform 220ms cubic-bezier(0.22,1,0.36,1), box-shadow 220ms, border-color 220ms, background 220ms',
+                    cursor: 'pointer',
                     display: 'flex',
-                    alignItems: 'flex-end',
-                    justifyContent: 'flex-start',
-                    textAlign: 'left',
-                    ...sansStyle,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    boxShadow: active
-                      ? `inset 0 0 0 3px ${COLORS.tomato}, 0 6px 14px rgba(232,71,44,0.25)`
-                      : '0 4px 10px rgba(26,22,18,0.08)',
-                    transition: 'box-shadow 220ms, transform 220ms',
-                    transform: active ? 'scale(0.98)' : 'scale(1)',
-                    opacity: p.you ? 0.65 : 1,
-                    position: 'relative',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 6,
                   }}
                 >
-                  <span>{p.label}</span>
-                  {active && !p.you && (
-                    <span style={{
-                      position: 'absolute',
-                      top: 8,
-                      right: 8,
-                      width: 22,
-                      height: 22,
-                      borderRadius: '50%',
-                      background: COLORS.tomato,
-                      color: COLORS.cream,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                        <path d="M5 12.5l4.5 4.5L19 7.5" stroke={COLORS.cream} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
-                  )}
+                  <span style={{ fontSize: 26, lineHeight: 1 }}>{m.emoji}</span>
+                  <span style={{ ...sansStyle, fontSize: 10, fontWeight: 600, color: active ? COLORS.tomato : COLORS.inkSoft, letterSpacing: '-0.01em' }}>
+                    {m.label}
+                  </span>
                 </button>
               )
             })}
           </div>
         </div>
 
+        {/* Memory quote */}
+        <div style={{
+          marginTop: 40,
+          padding: '20px 22px',
+          borderRadius: 20,
+          background: COLORS.cream2,
+          border: '1px solid rgba(26,22,18,0.06)',
+        }}>
+          <div style={{ ...serifStyle, fontSize: 22, color: COLORS.ink, lineHeight: 1.25 }}>
+            этот вечер останется<br/>с вами.
+          </div>
+          <div style={{ ...sansStyle, fontSize: 13, color: COLORS.inkSoft, marginTop: 8, lineHeight: 1.5 }}>
+            следующий круг соберётся через неделю.
+          </div>
+        </div>
+
         {/* CTA */}
         <button
+          disabled={saving}
           style={{
-            marginTop: 40,
+            marginTop: 32,
             width: '100%',
-            background: COLORS.ink,
+            background: saved ? COLORS.forest : COLORS.tomato,
             color: COLORS.cream,
             border: 'none',
             padding: '18px',
@@ -257,11 +191,14 @@ export function PostEventScreen() {
             fontSize: 15,
             fontWeight: 700,
             letterSpacing: '-0.01em',
-            boxShadow: '0 12px 28px rgba(26,22,18,0.18)',
+            boxShadow: saved ? '0 12px 28px rgba(45,74,62,0.30)' : '0 12px 28px rgba(232,71,44,0.35)',
+            cursor: saving ? 'default' : 'pointer',
+            opacity: saving ? 0.7 : 1,
+            transition: 'background 300ms ease, box-shadow 300ms ease',
           }}
-          onClick={() => { haptic('medium'); navigate('/home') }}
+          onClick={handleSave}
         >
-          в следующую пятницу →
+          {saving ? '...' : saved ? 'сохранено ✓' : 'сохранить и вернуться →'}
         </button>
 
         <button
@@ -274,10 +211,12 @@ export function PostEventScreen() {
             fontSize: 13,
             fontWeight: 500,
             padding: '10px',
+            border: 'none',
+            cursor: 'pointer',
           }}
           onClick={() => { haptic('light'); navigate('/calendar') }}
         >
-          закрыть и вернуться
+          закрыть без сохранения
         </button>
       </div>
     </div>

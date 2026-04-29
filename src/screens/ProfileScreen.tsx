@@ -1,8 +1,11 @@
-import { useState, type CSSProperties } from 'react'
+import { useState, useEffect, type CSSProperties } from 'react'
 import { COLORS, serifStyle, sansStyle } from '../theme'
 import { Grain } from '../components/Grain'
 import { TabBar } from '../components/TabBar'
+import { PageTransition } from '../components/PageTransition'
 import { haptic } from '../lib/telegram'
+import { useUser } from '../context/UserContext'
+import { fetchUserProfile, type UserProfile } from '../lib/db'
 
 type StickerKind = 'tomato' | 'ink' | 'cream' | 'forest' | 'honey'
 
@@ -33,41 +36,16 @@ const SETTINGS = [
 function palette(k: StickerKind): { bg: string; c: string; br: string; shadow: string } {
   switch (k) {
     case 'tomato':
-      return {
-        bg: COLORS.tomato,
-        c: COLORS.cream,
-        br: 'none',
-        shadow: '0 8px 18px rgba(232,71,44,0.32), 0 1px 0 rgba(26,22,18,0.08)',
-      }
+      return { bg: COLORS.tomato, c: COLORS.cream, br: 'none', shadow: '0 8px 18px rgba(232,71,44,0.32), 0 1px 0 rgba(26,22,18,0.08)' }
     case 'ink':
-      return {
-        bg: COLORS.ink,
-        c: COLORS.cream,
-        br: 'none',
-        shadow: '0 8px 18px rgba(26,22,18,0.30), 0 1px 0 rgba(26,22,18,0.08)',
-      }
+      return { bg: COLORS.ink, c: COLORS.cream, br: 'none', shadow: '0 8px 18px rgba(26,22,18,0.30), 0 1px 0 rgba(26,22,18,0.08)' }
     case 'forest':
-      return {
-        bg: COLORS.forest,
-        c: COLORS.cream,
-        br: 'none',
-        shadow: '0 8px 18px rgba(45,74,62,0.32), 0 1px 0 rgba(26,22,18,0.08)',
-      }
+      return { bg: COLORS.forest, c: COLORS.cream, br: 'none', shadow: '0 8px 18px rgba(45,74,62,0.32), 0 1px 0 rgba(26,22,18,0.08)' }
     case 'honey':
-      return {
-        bg: COLORS.honey,
-        c: COLORS.ink,
-        br: 'none',
-        shadow: '0 8px 18px rgba(244,201,93,0.45), 0 1px 0 rgba(26,22,18,0.06)',
-      }
+      return { bg: COLORS.honey, c: COLORS.ink, br: 'none', shadow: '0 8px 18px rgba(244,201,93,0.45), 0 1px 0 rgba(26,22,18,0.06)' }
     case 'cream':
     default:
-      return {
-        bg: '#fff',
-        c: COLORS.ink,
-        br: '1px solid rgba(26,22,18,0.10)',
-        shadow: '0 4px 12px rgba(26,22,18,0.10), 0 1px 0 rgba(26,22,18,0.04)',
-      }
+      return { bg: '#fff', c: COLORS.ink, br: '1px solid rgba(26,22,18,0.10)', shadow: '0 4px 12px rgba(26,22,18,0.10), 0 1px 0 rgba(26,22,18,0.04)' }
   }
 }
 
@@ -77,8 +55,26 @@ function padFor(size: number): string {
   return '7px 11px'
 }
 
+function formatNextEvent(booking: { meetup: { date_label: string; place: string; seats: number } } | null): { label: string; place: string; seats: number } | null {
+  if (!booking) return null
+  return {
+    label: booking.meetup.date_label,
+    place: booking.meetup.place,
+    seats: booking.meetup.seats,
+  }
+}
+
 export function ProfileScreen() {
+  const { user } = useUser()
   const [tags, setTags] = useState<VibeTag[]>(VIBE_TAGS)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+
+  useEffect(() => {
+    if (!user) return
+    fetchUserProfile(user.id)
+      .then(setProfile)
+      .catch(console.error)
+  }, [user])
 
   const root: CSSProperties = {
     position: 'relative',
@@ -104,20 +100,26 @@ export function ProfileScreen() {
     if (!next) return
     const sizes = [14, 17, 20, 22]
     const rotations = [-4, -2, 1, 3, -1]
-    const fallbackSize = sizes[tags.length % sizes.length] ?? 17
-    const fallbackRot = rotations[tags.length % rotations.length] ?? 0
     setTags((prev) => [
       ...prev,
       {
         t: next.t,
         kind: next.kind,
-        size: fallbackSize,
-        rot: fallbackRot,
+        size: sizes[tags.length % sizes.length] ?? 17,
+        rot: rotations[tags.length % rotations.length] ?? 0,
       },
     ])
   }
 
+  const displayName = user?.name ?? 'гость'
+  const initial = displayName.charAt(0).toUpperCase()
+  const nextEvent = profile ? formatNextEvent(profile.upcomingBooking) : null
+  const totalEvents = profile?.totalBookings ?? 0
+  const peopleMet = totalEvents * 5
+  const places = profile?.uniquePlaces ?? 0
+
   return (
+    <PageTransition>
     <div style={root}>
       <Grain opacity={0.3} />
       <div style={{ paddingTop: 64, paddingBottom: 110 }}>
@@ -127,14 +129,29 @@ export function ProfileScreen() {
           <div style={{ ...sansStyle, fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: COLORS.inkSoft, textTransform: 'uppercase' }}>
             вы
           </div>
+          <div style={{
+            width: 64,
+            height: 64,
+            borderRadius: '50%',
+            background: `linear-gradient(135deg, ${COLORS.tomato} 0%, ${COLORS.forest} 100%)`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            ...serifStyle,
+            fontSize: 28,
+            color: COLORS.cream,
+            marginTop: 16,
+            marginBottom: 16,
+            boxShadow: '0 8px 24px rgba(232,71,44,0.30)',
+          }}>{initial}</div>
           <h1 style={{ margin: '10px 0 0', fontSize: 46, lineHeight: 0.98, letterSpacing: '-0.025em' }}>
-            <span style={serifStyle}>Артём,</span>
-            <br />
-            <span style={{ ...sansStyle, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>29.</span>
+            <span style={serifStyle}>{displayName},</span>
           </h1>
           <div style={{ ...sansStyle, fontSize: 14, color: COLORS.inkSoft, marginTop: 6 }}>
-            в Свой Круг с октября ·{' '}
-            <span style={{ color: COLORS.ink, fontWeight: 700 }}>4 вечера</span>
+            {totalEvents > 0
+              ? <>в Свой Круг уже {' '}<span style={{ color: COLORS.ink, fontWeight: 700 }}>{totalEvents} {totalEvents === 1 ? 'вечер' : totalEvents < 5 ? 'вечера' : 'вечеров'}</span></>
+              : 'добро пожаловать в Свой Круг'
+            }
           </div>
         </div>
 
@@ -151,9 +168,9 @@ export function ProfileScreen() {
           <Grain opacity={0.3} />
           <div style={{ position: 'relative', zIndex: 2, display: 'flex', justifyContent: 'space-between', gap: 8 }}>
             {[
-              { n: 4, l: 'вечеров', accent: true },
-              { n: 23, l: 'людей встречено', accent: false },
-              { n: 7, l: 'мест в Москве', accent: false },
+              { n: totalEvents, l: 'вечеров', accent: true },
+              { n: peopleMet, l: 'людей встречено', accent: false },
+              { n: places, l: 'мест в Москве', accent: false },
             ].map((s) => (
               <div key={s.l}>
                 <div style={{
@@ -180,24 +197,58 @@ export function ProfileScreen() {
           </div>
         </div>
 
+        {/* Next evening mini card */}
+        {nextEvent ? (
+          <div style={{
+            margin: '0 22px 22px',
+            padding: '16px 18px',
+            borderRadius: 20,
+            background: '#fff',
+            border: '1px solid rgba(26,22,18,0.06)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}>
+            <div>
+              <div style={{ ...sansStyle, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: COLORS.inkSoft, textTransform: 'uppercase' }}>следующий вечер</div>
+              <div style={{ ...serifStyle, fontSize: 20, color: COLORS.ink, marginTop: 4 }}>{nextEvent.label}</div>
+              <div style={{ ...sansStyle, fontSize: 12, color: COLORS.inkSoft, marginTop: 2 }}>{nextEvent.place} — {nextEvent.seats} человек</div>
+            </div>
+            <div style={{
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
+              background: COLORS.tomato,
+              color: COLORS.cream,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              ...sansStyle,
+              fontWeight: 700,
+              fontSize: 18,
+              boxShadow: '0 4px 12px rgba(232,71,44,0.35)',
+              flexShrink: 0,
+            }}>{nextEvent.seats}</div>
+          </div>
+        ) : totalEvents === 0 ? (
+          <div style={{
+            margin: '0 22px 22px',
+            padding: '16px 18px',
+            borderRadius: 20,
+            background: COLORS.cream2,
+            border: '1px solid rgba(26,22,18,0.06)',
+          }}>
+            <div style={{ ...serifStyle, fontSize: 20, color: COLORS.ink, marginBottom: 4 }}>найти первый вечер</div>
+            <div style={{ ...sansStyle, fontSize: 13, color: COLORS.inkSoft }}>загляните на главную и запишитесь в ближайший круг.</div>
+          </div>
+        ) : null}
+
         {/* Sticker vibes */}
         <div style={{ padding: '0 22px 22px' }}>
-          <div style={{
-            ...serifStyle,
-            fontSize: 32,
-            color: COLORS.ink,
-            lineHeight: 1,
-            marginBottom: 18,
-          }}>
+          <div style={{ ...serifStyle, fontSize: 32, color: COLORS.ink, lineHeight: 1, marginBottom: 18 }}>
             вы — это
           </div>
-          <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '14px 10px',
-            alignItems: 'center',
-            paddingBottom: 6,
-          }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px 10px', alignItems: 'center', paddingBottom: 6 }}>
             {tags.map((tag, i) => {
               const p = palette(tag.kind)
               return (
@@ -222,12 +273,8 @@ export function ProfileScreen() {
                     whiteSpace: 'nowrap',
                   }}
                   onClick={() => haptic('light')}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = `rotate(${tag.rot * 0.4}deg) scale(1.04)`
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = `rotate(${tag.rot}deg) scale(1)`
-                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = `rotate(${tag.rot * 0.4}deg) scale(1.04)` }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = `rotate(${tag.rot}deg) scale(1)` }}
                 >
                   {tag.t}
                 </button>
@@ -255,23 +302,10 @@ export function ProfileScreen() {
 
         {/* Settings */}
         <div style={{ padding: '0 22px' }}>
-          <div style={{
-            ...sansStyle,
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.1em',
-            color: COLORS.inkSoft,
-            textTransform: 'uppercase',
-            marginBottom: 10,
-          }}>
+          <div style={{ ...sansStyle, fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: COLORS.inkSoft, textTransform: 'uppercase', marginBottom: 10 }}>
             настройки
           </div>
-          <div style={{
-            background: '#fff',
-            borderRadius: 18,
-            border: '1px solid rgba(26,22,18,0.06)',
-            overflow: 'hidden',
-          }}>
+          <div style={{ background: '#fff', borderRadius: 18, border: '1px solid rgba(26,22,18,0.06)', overflow: 'hidden' }}>
             {SETTINGS.map((row, i) => (
               <button
                 key={row.l}
@@ -284,22 +318,16 @@ export function ProfileScreen() {
                   width: '100%',
                   textAlign: 'left',
                   background: 'transparent',
+                  border: 'none',
+                  borderBottom: 'none',
                   borderLeft: 'none',
                   borderRight: 'none',
-                  borderBottom: 'none',
                   cursor: 'pointer',
                 }}
                 onClick={() => haptic('light')}
               >
-                <span style={{ ...sansStyle, fontSize: 14, fontWeight: 500, color: COLORS.ink }}>
-                  {row.l}
-                </span>
-                <span style={{
-                  ...sansStyle,
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: 'tomato' in row && row.tomato ? COLORS.tomato : COLORS.inkSoft,
-                }}>
+                <span style={{ ...sansStyle, fontSize: 14, fontWeight: 500, color: COLORS.ink }}>{row.l}</span>
+                <span style={{ ...sansStyle, fontSize: 13, fontWeight: 600, color: 'tomato' in row && row.tomato ? COLORS.tomato : COLORS.inkSoft }}>
                   {row.v} →
                 </span>
               </button>
@@ -310,5 +338,6 @@ export function ProfileScreen() {
 
       <TabBar active="me" />
     </div>
+    </PageTransition>
   )
 }
