@@ -163,6 +163,7 @@ export function HomeScreen() {
                   borderRadius: 99,
                   background: isActive ? m.bg : 'rgba(255,255,255,0.85)',
                   color: isActive ? m.fg : COLORS.ink,
+                  WebkitTextFillColor: isActive ? m.fg : COLORS.ink,
                   fontSize: 12,
                   fontWeight: 600,
                   border: isActive ? '1px solid transparent' : '1px solid rgba(26,22,18,0.10)',
