@@ -106,9 +106,9 @@ export function HomeScreen() {
             70% { box-shadow: 0 0 0 8px rgba(232,71,44,0); }
             100% { box-shadow: 0 0 0 0 rgba(232,71,44,0); }
           }
-          @keyframes slideUp {
-            from { opacity: 0; translate: 0 28px; }
-            to   { opacity: 1; translate: 0 0; }
+          @keyframes cardIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
           }
           @keyframes shimmer {
             0% { background-position: -200% 0; }
@@ -255,7 +255,7 @@ export function HomeScreen() {
                   display: 'block',
                   textAlign: 'left',
                   cursor: 'pointer',
-                  animation: `slideUp 560ms cubic-bezier(0.22, 1, 0.36, 1) ${i * 90}ms both`,
+                  animation: `cardIn 400ms ease ${i * 80}ms both`,
                 }}
                 aria-label={`${c.title}, ${c.kind} ${c.time_short}`}
               >
