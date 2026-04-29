@@ -153,6 +153,12 @@ export function HomeScreen() {
                 key={m.id}
                 style={{
                   ...sansStyle,
+                  WebkitAppearance: 'none',
+                  appearance: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  lineHeight: 1,
                   padding: '9px 16px',
                   borderRadius: 99,
                   background: isActive ? m.bg : 'rgba(255,255,255,0.85)',
