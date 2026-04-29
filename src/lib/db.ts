@@ -17,6 +17,7 @@ export interface DbCircle {
 
 export interface DbMeetup {
   id: string
+  circle_id: string | null
   title: string
   place: string
   date_label: string
@@ -26,6 +27,12 @@ export interface DbMeetup {
   mood: string | null
   status: 'upcoming' | 'past' | 'cancelled'
   photo: string | null
+}
+
+export interface DbParticipant {
+  id: string
+  name: string
+  age: number | null
 }
 
 export async function fetchCircles(): Promise<DbCircle[]> {
@@ -41,7 +48,7 @@ export async function fetchCircles(): Promise<DbCircle[]> {
 export async function fetchUpcomingMeetup(): Promise<DbMeetup | null> {
   const { data, error } = await supabase
     .from('meetups')
-    .select('id, title, place, date_label, scheduled_at, seats, taken, mood, status, photo')
+    .select('id, circle_id, title, place, date_label, scheduled_at, seats, taken, mood, status, photo')
     .eq('status', 'upcoming')
     .order('scheduled_at', { ascending: true })
     .limit(1)
@@ -53,7 +60,7 @@ export async function fetchUpcomingMeetup(): Promise<DbMeetup | null> {
 export async function fetchPastMeetups(): Promise<DbMeetup[]> {
   const { data, error } = await supabase
     .from('meetups')
-    .select('id, title, place, date_label, scheduled_at, seats, taken, mood, status, photo')
+    .select('id, circle_id, title, place, date_label, scheduled_at, seats, taken, mood, status, photo')
     .eq('status', 'past')
     .order('scheduled_at', { ascending: false })
     .limit(10)
@@ -76,7 +83,7 @@ export async function fetchCircleById(id: string): Promise<DbCircle | null> {
 export async function fetchMeetupsByCircle(circleId: string): Promise<DbMeetup[]> {
   const { data, error } = await supabase
     .from('meetups')
-    .select('id, title, place, date_label, scheduled_at, seats, taken, mood, status, photo')
+    .select('id, circle_id, title, place, date_label, scheduled_at, seats, taken, mood, status, photo')
     .eq('circle_id', circleId)
     .neq('status', 'cancelled')
     .order('scheduled_at', { ascending: true })
@@ -132,11 +139,23 @@ export interface DbBookingWithMeetup {
 export async function fetchUserBookings(userId: string): Promise<DbBookingWithMeetup[]> {
   const { data, error } = await supabase
     .from('bookings')
-    .select('id, meetup_id, mood, meetup:meetup_id(id, title, place, date_label, scheduled_at, seats, taken, mood, status, photo)')
+    .select('id, meetup_id, mood, meetup:meetup_id(id, circle_id, title, place, date_label, scheduled_at, seats, taken, mood, status, photo)')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
   if (error) throw error
   return (data ?? []) as unknown as DbBookingWithMeetup[]
+}
+
+export async function fetchMeetupParticipants(meetupId: string): Promise<DbParticipant[]> {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('user:user_id(id, name, age)')
+    .eq('meetup_id', meetupId)
+  if (error) throw error
+  type Row = { user: { id: string; name: string; age: number | null } | { id: string; name: string; age: number | null }[] | null }
+  return ((data ?? []) as unknown as Row[])
+    .map((b) => (Array.isArray(b.user) ? b.user[0] : b.user))
+    .filter((u): u is { id: string; name: string; age: number | null } => u != null)
 }
 
 // Save post-event mood to a booking

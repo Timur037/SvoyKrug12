@@ -7,8 +7,9 @@ import { TabBar } from '../components/TabBar'
 import { Seats } from '../components/Seats'
 import { PageTransition } from '../components/PageTransition'
 import { haptic } from '../lib/telegram'
-import { fetchUpcomingMeetup, fetchPastMeetups } from '../lib/db'
+import { fetchUserBookings } from '../lib/db'
 import type { DbMeetup } from '../lib/db'
+import { useUser } from '../context/UserContext'
 
 const DAY_NAMES = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс']
 
@@ -46,6 +47,7 @@ function markHotDays(week: WeekDay[], upcoming: DbMeetup | null): WeekDay[] {
 
 export function CalendarScreen() {
   const navigate = useNavigate()
+  const { user } = useUser()
   const [upcoming, setUpcoming] = useState<DbMeetup | null>(null)
   const [past, setPast] = useState<DbMeetup[]>([])
   const today = new Date()
@@ -53,9 +55,19 @@ export function CalendarScreen() {
   const week = markHotDays(baseWeek, upcoming)
 
   useEffect(() => {
-    fetchUpcomingMeetup().then(setUpcoming).catch(console.error)
-    fetchPastMeetups().then(setPast).catch(console.error)
-  }, [])
+    if (!user) return
+    fetchUserBookings(user.id)
+      .then((bookings) => {
+        const upcomingBooking = bookings.find((b) => b.meetup.status === 'upcoming')
+        setUpcoming(upcomingBooking?.meetup ?? null)
+        const pastMeetups = bookings
+          .filter((b) => b.meetup.status === 'past')
+          .map((b) => b.meetup)
+          .sort((a, b) => (b.scheduled_at ?? '').localeCompare(a.scheduled_at ?? ''))
+        setPast(pastMeetups)
+      })
+      .catch(console.error)
+  }, [user])
 
   const root: CSSProperties = {
     position: 'relative',
@@ -224,7 +236,13 @@ export function CalendarScreen() {
                 padding: 0,
                 textAlign: 'left',
               }}
-              onClick={() => { haptic('medium'); navigate('/circle') }}
+              onClick={() => {
+                haptic('medium')
+                if (upcoming?.circle_id) {
+                  try { localStorage.setItem('svoy_krug_last_circle', upcoming.circle_id) } catch { /* ignore */ }
+                }
+                navigate('/circle')
+              }}
               aria-label="Открыть детали вечера"
             >
               {upcoming.photo && (
