@@ -7,6 +7,7 @@ type Tab = 'home' | 'cal' | 'me'
 
 interface TabBarProps {
   active: Tab
+  notifDot?: boolean
 }
 
 interface TabConfig {
@@ -16,42 +17,60 @@ interface TabConfig {
 }
 
 const TABS: TabConfig[] = [
-  { key: 'home', label: 'круги', path: '/home' },
-  { key: 'cal', label: 'мой вечер', path: '/calendar' },
-  { key: 'me', label: 'вы', path: '/profile' },
+  { key: 'home', label: 'круги',     path: '/home' },
+  { key: 'cal',  label: 'мой вечер', path: '/calendar' },
+  { key: 'me',   label: 'вы',        path: '/profile' },
 ]
 
 function HandDrawnCircle({ color }: { color: string }) {
-  // Hand-drawn ellipse around the active label.
-  // viewBox roughly matches a label of width ~80px, height ~28px.
   return (
     <svg
       width="100%"
       height="100%"
-      viewBox="0 0 110 40"
+      viewBox="0 0 120 64"
       preserveAspectRatio="none"
       fill="none"
-      style={{
-        position: 'absolute',
-        inset: 0,
-        pointerEvents: 'none',
-      }}
+      style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
       aria-hidden="true"
     >
       <path
-        d="M14 22 C 14 8, 38 4, 60 5 C 86 6, 102 12, 100 22 C 98 32, 76 36, 52 35 C 28 34, 12 30, 14 22 Z"
+        d="M14 34 C 13 14, 36 5, 62 6 C 90 7, 108 16, 107 34 C 106 50, 82 60, 56 59 C 28 58, 13 52, 14 34 Z"
         stroke={color}
-        strokeWidth="1.6"
+        strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
-        opacity="0.92"
+        opacity="0.88"
       />
     </svg>
   )
 }
 
-export function TabBar({ active }: TabBarProps) {
+function TabIcon({ tab, color }: { tab: Tab; color: string }) {
+  if (tab === 'home') return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="7"    r="2.8" stroke={color} strokeWidth="1.5" />
+      <circle cx="6"  cy="17"   r="2.8" stroke={color} strokeWidth="1.5" />
+      <circle cx="18" cy="17"   r="2.8" stroke={color} strokeWidth="1.5" />
+    </svg>
+  )
+  if (tab === 'cal') return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+        stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+      />
+    </svg>
+  )
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="8" r="3.5" stroke={color} strokeWidth="1.5" />
+      <path d="M5 20c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function TabBar({ active, notifDot = false }: TabBarProps) {
   const navigate = useNavigate()
 
   const wrap: CSSProperties = {
@@ -60,17 +79,18 @@ export function TabBar({ active }: TabBarProps) {
     right: 0,
     bottom: 0,
     paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-    background: 'rgba(245, 239, 230, 0.72)',
-    backdropFilter: 'blur(18px) saturate(1.2)',
-    WebkitBackdropFilter: 'blur(18px) saturate(1.2)',
-    borderTop: '1px solid rgba(26,22,18,0.06)',
+    background: 'rgba(245,239,230,0.78)',
+    backdropFilter: 'blur(20px) saturate(1.3)',
+    WebkitBackdropFilter: 'blur(20px) saturate(1.3)',
+    borderTop: '1px solid rgba(26,22,18,0.07)',
     zIndex: 50,
   }
+
   const inner: CSSProperties = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-around',
-    padding: '14px 18px 18px',
+    padding: '10px 18px 14px',
     maxWidth: 520,
     margin: '0 auto',
   }
@@ -78,15 +98,19 @@ export function TabBar({ active }: TabBarProps) {
   const itemStyle = (isActive: boolean): CSSProperties => ({
     ...sansStyle,
     position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 4,
     color: isActive ? COLORS.tomato : COLORS.inkSoft,
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: isActive ? 600 : 500,
     letterSpacing: '-0.01em',
-    padding: '8px 14px',
-    transition: 'color 220ms ease',
-    textTransform: 'lowercase',
+    padding: '6px 20px 4px',
+    transition: 'color 200ms ease',
     background: 'transparent',
     border: 'none',
+    minWidth: 70,
   })
 
   return (
@@ -94,17 +118,35 @@ export function TabBar({ active }: TabBarProps) {
       <div style={inner}>
         {TABS.map((t) => {
           const isActive = t.key === active
+          const showDot = notifDot && t.key === 'home'
+          const iconColor = isActive ? COLORS.tomato : COLORS.inkSoft
           return (
             <button
               key={t.key}
               style={itemStyle(isActive)}
-              onClick={() => {
-                haptic('light')
-                navigate(t.path)
-              }}
+              onClick={() => { haptic('light'); navigate(t.path) }}
               aria-current={isActive ? 'page' : undefined}
             >
               {isActive && <HandDrawnCircle color={COLORS.tomato} />}
+              <span style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <TabIcon tab={t.key} color={iconColor} />
+                {showDot && (
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      position: 'absolute',
+                      top: -2,
+                      right: -4,
+                      width: 7,
+                      height: 7,
+                      borderRadius: '50%',
+                      background: COLORS.tomato,
+                      border: '1.5px solid rgba(245,239,230,0.9)',
+                      zIndex: 3,
+                    }}
+                  />
+                )}
+              </span>
               <span style={{ position: 'relative', zIndex: 2 }}>{t.label}</span>
             </button>
           )

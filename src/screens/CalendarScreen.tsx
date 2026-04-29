@@ -125,12 +125,24 @@ export function CalendarScreen() {
           {/* Week strip */}
           <div style={{
             margin: '14px 22px 24px',
-            padding: '14px',
-            borderRadius: 18,
+            padding: '16px',
+            borderRadius: 20,
             background: '#fff',
             border: '1px solid rgba(26,22,18,0.06)',
+            boxShadow: '0 2px 12px rgba(26,22,18,0.05)',
           }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
+            <div style={{
+              ...sansStyle,
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: '0.12em',
+              color: COLORS.inkSoft,
+              textTransform: 'uppercase',
+              marginBottom: 12,
+            }}>
+              {today.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
               {week.map((d) => {
                 const isToday =
                   d.fullDate.getDate() === today.getDate() &&
@@ -139,7 +151,7 @@ export function CalendarScreen() {
                 return (
                   <button
                     key={d.n}
-                    style={{ textAlign: 'center', background: 'transparent', border: 'none' }}
+                    style={{ textAlign: 'center', background: 'transparent', border: 'none', padding: '2px 0' }}
                     onClick={() => {
                       haptic('light')
                       if (d.hot) navigate('/group')
@@ -147,19 +159,19 @@ export function CalendarScreen() {
                   >
                     <div style={{
                       ...sansStyle,
-                      fontSize: 10,
-                      fontWeight: 600,
-                      color: isToday ? COLORS.tomato : COLORS.inkSoft,
-                      letterSpacing: '0.06em',
+                      fontSize: 9,
+                      fontWeight: 700,
+                      color: d.hot ? COLORS.tomato : isToday ? COLORS.tomato : COLORS.inkSoft,
+                      letterSpacing: '0.08em',
                       textTransform: 'uppercase',
                     }}>
                       {d.d}
                     </div>
                     <div style={{
-                      marginTop: 6,
-                      width: 30,
-                      height: 30,
-                      lineHeight: '30px',
+                      marginTop: 5,
+                      width: 32,
+                      height: 32,
+                      lineHeight: '32px',
                       textAlign: 'center',
                       borderRadius: 99,
                       ...sansStyle,
@@ -170,6 +182,8 @@ export function CalendarScreen() {
                       background: d.hot ? COLORS.tomato : isToday ? COLORS.cream2 : 'transparent',
                       color: d.hot ? COLORS.cream : COLORS.ink,
                       border: isToday && !d.hot ? `1.5px solid ${COLORS.tomato}` : 'none',
+                      boxShadow: d.hot ? '0 4px 12px rgba(232,71,44,0.35)' : 'none',
+                      transition: 'background 200ms, box-shadow 200ms',
                     }}>
                       {d.n}
                     </div>
@@ -230,11 +244,13 @@ export function CalendarScreen() {
                 overflow: 'hidden',
                 background: COLORS.tomato,
                 color: COLORS.cream,
-                boxShadow: '0 18px 40px rgba(232,71,44,0.25)',
+                boxShadow: '0 20px 48px rgba(232,71,44,0.30), 0 4px 12px rgba(232,71,44,0.15)',
                 position: 'relative',
                 border: 'none',
                 padding: 0,
                 textAlign: 'left',
+                animation: 'fadeIn 400ms cubic-bezier(0.22,1,0.36,1) both',
+                transition: 'transform 200ms ease, box-shadow 200ms ease',
               }}
               onClick={() => {
                 haptic('medium')

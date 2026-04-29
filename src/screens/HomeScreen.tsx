@@ -31,6 +31,13 @@ function getGreeting(name: string = 'гость', date: Date = new Date()): Gree
   return { lead: 'ночной круг,', name: display }
 }
 
+function getTimeGradient(h: number): string {
+  if (h >= 5 && h < 9)   return 'radial-gradient(ellipse at 55% 0%, rgba(244,201,93,0.28) 0%, transparent 65%)'
+  if (h >= 9 && h < 17)  return 'none'
+  if (h >= 17 && h < 21) return 'radial-gradient(ellipse at 50% 0%, rgba(232,71,44,0.12) 0%, rgba(244,201,93,0.08) 40%, transparent 70%)'
+  return 'radial-gradient(ellipse at 50% 0%, rgba(26,22,18,0.10) 0%, transparent 60%)'
+}
+
 function isToday(c: DbCircle): boolean {
   const t = c.time_short?.toLowerCase() ?? ''
   return t.includes('сегодня')
@@ -56,6 +63,7 @@ export function HomeScreen() {
   }, [])
 
   const greeting = getGreeting(user?.name ?? 'гость')
+  const timeGradient = getTimeGradient(new Date().getHours())
 
   const root: CSSProperties = {
     position: 'relative',
@@ -80,6 +88,18 @@ export function HomeScreen() {
     <PageTransition>
       <div style={root}>
         <Grain opacity={0.3} />
+        {timeGradient !== 'none' && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 280,
+            background: timeGradient,
+            pointerEvents: 'none',
+            zIndex: 1,
+          }} />
+        )}
         <style>{`
           @keyframes pulse-dot {
             0% { box-shadow: 0 0 0 0 rgba(232,71,44,0.55); }
@@ -87,8 +107,8 @@ export function HomeScreen() {
             100% { box-shadow: 0 0 0 0 rgba(232,71,44,0); }
           }
           @keyframes slideUp {
-            from { opacity: 0; transform: translateY(24px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(28px) rotate(var(--tilt)); }
+            to   { opacity: 1; transform: translateY(0)   rotate(var(--tilt)); }
           }
           @keyframes shimmer {
             0% { background-position: -200% 0; }
@@ -97,7 +117,7 @@ export function HomeScreen() {
         `}</style>
 
         {/* Greeting */}
-        <div style={{ padding: '60px 28px 0' }}>
+        <div style={{ padding: '60px 28px 0', position: 'relative', zIndex: 2 }}>
           <h1 style={{ margin: 0, fontSize: 42, lineHeight: 0.96, letterSpacing: '-0.025em', color: COLORS.ink }}>
             <span style={serifStyle}>{greeting.lead}</span>
             <br />
@@ -124,6 +144,8 @@ export function HomeScreen() {
           gap: 8,
           overflowX: 'auto',
           scrollbarWidth: 'none',
+          position: 'relative',
+          zIndex: 2,
         }}>
           {MOODS.map((m) => {
             const isActive = activeMood === m.id
@@ -132,15 +154,17 @@ export function HomeScreen() {
                 key={m.id}
                 style={{
                   ...sansStyle,
-                  padding: '8px 14px',
+                  padding: '9px 16px',
                   borderRadius: 99,
-                  background: isActive ? m.bg : '#fff',
+                  background: isActive ? m.bg : 'rgba(255,255,255,0.85)',
                   color: isActive ? m.fg : COLORS.ink,
                   fontSize: 12,
                   fontWeight: 600,
-                  border: isActive ? '1px solid transparent' : '1px solid rgba(26,22,18,0.12)',
+                  border: isActive ? '1px solid transparent' : '1px solid rgba(26,22,18,0.10)',
                   flexShrink: 0,
-                  transition: 'all 220ms ease',
+                  transition: 'all 220ms cubic-bezier(0.22,1,0.36,1)',
+                  boxShadow: isActive ? '0 6px 16px rgba(26,22,18,0.15)' : '0 2px 6px rgba(26,22,18,0.06)',
+                  transform: isActive ? 'scale(1.04)' : 'scale(1)',
                 }}
                 onClick={() => { haptic('light'); setActiveMood(m.id) }}
               >
@@ -223,8 +247,8 @@ export function HomeScreen() {
                   borderRadius: 24,
                   overflow: 'hidden',
                   transform: `rotate(${c.tilt}deg)`,
-                  boxShadow: '0 14px 38px rgba(26,22,18,0.18), 0 4px 10px rgba(26,22,18,0.08)',
-                  border: '1px solid rgba(26,22,18,0.06)',
+                  boxShadow: '0 16px 42px rgba(26,22,18,0.20), 0 4px 12px rgba(26,22,18,0.08)',
+                  border: '1px solid rgba(26,22,18,0.05)',
                   background: '#000',
                   zIndex: 10 - i,
                   padding: 0,
@@ -232,7 +256,9 @@ export function HomeScreen() {
                   textAlign: 'left',
                   cursor: 'pointer',
                   opacity: 0,
-                  animation: `slideUp 520ms cubic-bezier(0.22, 1, 0.36, 1) ${i * 80}ms both`,
+                  // @ts-expect-error CSS custom property
+                  '--tilt': `${c.tilt}deg`,
+                  animation: `slideUp 560ms cubic-bezier(0.22, 1, 0.36, 1) ${i * 90}ms both`,
                 }}
                 aria-label={`${c.title}, ${c.kind} ${c.time_short}`}
               >
