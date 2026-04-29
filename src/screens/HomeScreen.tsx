@@ -107,8 +107,8 @@ export function HomeScreen() {
             100% { box-shadow: 0 0 0 0 rgba(232,71,44,0); }
           }
           @keyframes slideUp {
-            from { opacity: 0; transform: translateY(28px) rotate(var(--tilt)); }
-            to   { opacity: 1; transform: translateY(0)   rotate(var(--tilt)); }
+            from { opacity: 0; translate: 0 28px; }
+            to   { opacity: 1; translate: 0 0; }
           }
           @keyframes shimmer {
             0% { background-position: -200% 0; }
@@ -255,9 +255,6 @@ export function HomeScreen() {
                   display: 'block',
                   textAlign: 'left',
                   cursor: 'pointer',
-                  opacity: 0,
-                  // @ts-expect-error CSS custom property
-                  '--tilt': `${c.tilt}deg`,
                   animation: `slideUp 560ms cubic-bezier(0.22, 1, 0.36, 1) ${i * 90}ms both`,
                 }}
                 aria-label={`${c.title}, ${c.kind} ${c.time_short}`}
