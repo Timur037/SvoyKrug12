@@ -104,8 +104,8 @@ function isToday(c: DbCircle): boolean {
 
 export function HomeScreen() {
   const [activeMood, setActiveMood] = useState<string>('live')
-  const [circles, setCircles] = useState<DbCircle[]>([])
-  const [loaded, setLoaded] = useState<boolean>(false)
+  const [_circles, setCircles] = useState<DbCircle[]>([])
+  const [loaded, setLoaded] = useState<boolean>(true)
   const navigate = useNavigate()
   const { user } = useUser()
 
