@@ -12,10 +12,10 @@ type Seat = {
   cy: number
 }
 
-const TABLE_CONTAINER = 300
+const TABLE_CONTAINER = 350
 const TABLE_CENTER = TABLE_CONTAINER / 2
-const SEAT_RADIUS = 130
-const TABLE_RADIUS = 65
+const SEAT_RADIUS = 148
+const TABLE_RADIUS = 88
 
 type SeatRaw = Pick<Seat, 'name' | 'initial' | 'bg'>
 
@@ -103,8 +103,8 @@ export function Onb3() {
     top: '50%',
     left: '50%',
     transform: 'translate(-50%,-50%)',
-    width: 130,
-    height: 130,
+    width: 176,
+    height: 176,
     borderRadius: '50%',
     background: 'linear-gradient(145deg, #2A1E12 0%, #1A1208 100%)',
     border: '1.5px solid rgba(244,201,93,0.30)',
@@ -115,13 +115,15 @@ export function Onb3() {
     justifyContent: 'center',
   }
 
-  const candleGlow: CSSProperties = {
-    width: 32,
-    height: 32,
-    borderRadius: '50%',
-    background:
-      'radial-gradient(circle, rgba(244,201,93,0.55) 0%, rgba(232,71,44,0.15) 50%, transparent 70%)',
-    animation: 'flicker 2.8s ease-in-out infinite alternate',
+  const centerSix: CSSProperties = {
+    ...serifStyle,
+    fontSize: 80,
+    lineHeight: 1,
+    color: COLORS.honey,
+    opacity: 0.92,
+    textShadow: '0 0 40px rgba(244,201,93,0.50)',
+    animation: 'flicker 3.5s ease-in-out infinite alternate',
+    margin: 0,
   }
 
   const bottomBlock: CSSProperties = {
@@ -275,7 +277,7 @@ export function Onb3() {
         </svg>
 
         <div style={tableSurface}>
-          <div style={candleGlow} />
+          <span style={centerSix}>6</span>
         </div>
 
         {SEATS.map((seat, i) => (
