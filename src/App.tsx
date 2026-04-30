@@ -14,6 +14,10 @@ import { Quiz2 } from './screens/onboarding/Quiz2'
 import { Quiz3 } from './screens/onboarding/Quiz3'
 import { Quiz4 } from './screens/onboarding/Quiz4'
 import { Quiz5 } from './screens/onboarding/Quiz5'
+import { OnbHobbies } from './screens/onboarding/OnbHobbies'
+import { OnbQualities } from './screens/onboarding/OnbQualities'
+import { OnbGender } from './screens/onboarding/OnbGender'
+import { OnbDone } from './screens/onboarding/OnbDone'
 import { HomeScreen } from './screens/HomeScreen'
 import { CalendarScreen } from './screens/CalendarScreen'
 import { ProfileScreen } from './screens/ProfileScreen'
@@ -63,6 +67,10 @@ export default function App() {
           <Route path="/onboarding/quiz3" element={<Quiz3 />} />
           <Route path="/onboarding/quiz4" element={<Quiz4 />} />
           <Route path="/onboarding/quiz5" element={<Quiz5 />} />
+          <Route path="/onboarding/hobbies" element={<OnbHobbies />} />
+          <Route path="/onboarding/qualities" element={<OnbQualities />} />
+          <Route path="/onboarding/gender" element={<OnbGender />} />
+          <Route path="/onboarding/done" element={<OnbDone />} />
           <Route path="/home" element={<HomeScreen />} />
           <Route path="/calendar" element={<CalendarScreen />} />
           <Route path="/profile" element={<ProfileScreen />} />

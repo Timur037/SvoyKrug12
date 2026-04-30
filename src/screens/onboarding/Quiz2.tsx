@@ -138,8 +138,8 @@ export function Quiz2() {
 
   function finish() {
     haptic('medium')
-    localStorage.setItem('svoy_krug_onboarded', '1')
-    navigate('/home', { replace: true })
+    // Don't set onboarded flag here — will be set in OnbDone
+    navigate('/onboarding/hobbies')
   }
 
   return (
