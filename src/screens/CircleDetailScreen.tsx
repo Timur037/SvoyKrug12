@@ -406,6 +406,31 @@ export function CircleDetailScreen() {
             >
               {upcomingMeetup.date_label} · {upcomingMeetup.place}
             </div>
+            <button
+              onClick={() => {
+                haptic('light')
+                navigate('/chat')
+              }}
+              style={{
+                ...sansStyle,
+                marginTop: 12,
+                width: '100%',
+                padding: '11px 16px',
+                borderRadius: 99,
+                background: 'rgba(245,239,230,0.10)',
+                border: '1px solid rgba(245,239,230,0.15)',
+                color: COLORS.cream,
+                fontSize: 13,
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer',
+              }}
+            >
+              <span>написать группе</span>
+              <span style={{ opacity: 0.5 }}>→</span>
+            </button>
           </div>
         )}
 

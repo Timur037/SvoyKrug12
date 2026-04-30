@@ -19,6 +19,7 @@ import { BreathingScreen } from './screens/BreathingScreen'
 import { PostEventScreen } from './screens/PostEventScreen'
 import { BuildCircleScreen } from './screens/BuildCircleScreen'
 import { CircleDetailScreen } from './screens/CircleDetailScreen'
+import { GroupChatScreen } from './screens/GroupChatScreen'
 import { UserProvider } from './context/UserContext'
 import { posthog } from './lib/posthog'
 
@@ -61,6 +62,7 @@ export default function App() {
           <Route path="/profile" element={<ProfileScreen />} />
           <Route path="/group" element={<GroupScreen />} />
           <Route path="/circle" element={<CircleDetailScreen />} />
+          <Route path="/chat" element={<GroupChatScreen />} />
           <Route path="/waiting" element={<BreathingScreen />} />
           <Route path="/post-event" element={<PostEventScreen />} />
           <Route path="/build-circle" element={<BuildCircleScreen />} />
