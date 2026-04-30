@@ -231,7 +231,7 @@ export function Quiz2() {
             style={backBtn}
             onClick={() => {
               haptic('light')
-              navigate('/onboarding/quiz1')
+              navigate('/onboarding/quiz5')
             }}
           >
             ← назад

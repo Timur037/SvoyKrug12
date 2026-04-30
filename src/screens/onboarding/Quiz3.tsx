@@ -9,55 +9,75 @@ interface OptionDef {
   id: string
   title: string
   hint: string
-  vibe: string
-  icon: JSX.Element
+  icon: (color: string) => JSX.Element
 }
 
-function GlassIcon({ color }: { color: string }) {
+function MicIcon(color: string) {
   return (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <path
-        d="M8 4h12l-1.4 9c-.5 3-2.7 5-4.6 5s-4.1-2-4.6-5L8 4Z"
+      <rect
+        x="10"
+        y="3"
+        width="8"
+        height="14"
+        rx="4"
         stroke={color}
         strokeWidth="1.6"
-        strokeLinejoin="round"
       />
-      <path d="M14 18v6M10 24h8" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+      <path
+        d="M6 13c0 4.4 3.6 8 8 8s8-3.6 8-8"
+        stroke={color}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+      <path
+        d="M14 21v4M10 25h8"
+        stroke={color}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
     </svg>
   )
 }
 
-function BenchIcon({ color }: { color: string }) {
+function EarIcon(color: string) {
   return (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <path d="M3 13h22" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M5 13v9M23 13v9" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M3 16h22" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M8 4l3 9M20 4l-3 9" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+      <path
+        d="M9 12c0-3.3 2.5-6 6-6s6 2.7 6 6c0 2.5-1.6 3.8-3 5-1.4 1.2-2 2.2-2 3.5 0 1.5-1.2 3-3 3s-3-1.5-3-3"
+        stroke={color}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M13 12c0-1.1.9-2 2-2s2 .9 2 2"
+        stroke={color}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
     </svg>
   )
 }
 
 const OPTIONS: OptionDef[] = [
   {
-    id: 'wine',
-    title: 'долгий ужин',
-    hint: 'разговоры до полуночи, бокал, медленно.',
-    vibe: '— оживлённо, тепло.',
-    icon: <GlassIcon color={COLORS.cream} />,
+    id: 'soul',
+    title: 'душа компании',
+    hint: 'разогреваю, шучу, завожу разговор сам.',
+    icon: (color) => MicIcon(color),
   },
   {
-    id: 'walk',
-    title: 'прогулка в парке',
-    hint: 'пешком, без шума, с глубокими темами.',
-    vibe: '',
-    icon: <BenchIcon color={COLORS.ink} />,
+    id: 'listener',
+    title: 'вдумчивый слушатель',
+    hint: 'слушаю внимательно, отвечаю вдумчиво.',
+    icon: (color) => EarIcon(color),
   },
 ]
 
-export function Quiz1() {
+export function Quiz3() {
   const navigate = useNavigate()
-  const [picked, setPicked] = useState<string>('wine')
+  const [picked, setPicked] = useState<string>('soul')
 
   const root: CSSProperties = {
     position: 'relative',
@@ -132,12 +152,6 @@ export function Quiz1() {
     color: isSelected ? 'rgba(245,239,230,0.78)' : COLORS.inkSoft,
     margin: 0,
   })
-  const vibeChip: CSSProperties = {
-    ...serifStyle,
-    color: COLORS.honey,
-    fontSize: 18,
-    marginTop: 4,
-  }
   const iconBubble = (isSelected: boolean): CSSProperties => ({
     width: 48,
     height: 48,
@@ -159,7 +173,7 @@ export function Quiz1() {
     justifyContent: 'space-between',
     paddingTop: 18,
   }
-  const skipBtn: CSSProperties = {
+  const backBtn: CSSProperties = {
     ...sansStyle,
     color: COLORS.inkSoft,
     fontSize: 14,
@@ -186,7 +200,12 @@ export function Quiz1() {
 
   function next() {
     haptic('light')
-    navigate('/onboarding/quiz3')
+    navigate('/onboarding/quiz4')
+  }
+
+  function back() {
+    haptic('light')
+    navigate('/onboarding/quiz1')
   }
 
   return (
@@ -197,13 +216,21 @@ export function Quiz1() {
           <span style={dotsWrap}>
             <span
               style={{
+                width: 8,
+                height: 8,
+                borderRadius: 4,
+                background: COLORS.tomato,
+              }}
+            />
+            <span
+              style={{
                 width: 22,
                 height: 8,
                 borderRadius: 4,
                 background: COLORS.tomato,
               }}
             />
-            {[0, 1, 2, 3].map((i) => (
+            {[0, 1, 2].map((i) => (
               <span
                 key={i}
                 style={{
@@ -215,17 +242,18 @@ export function Quiz1() {
               />
             ))}
           </span>
-          <span style={stepLabel}>1 из 5</span>
+          <span style={stepLabel}>2 из 5</span>
         </div>
 
         <h2 style={heading}>
-          <span style={serifStyle}>что для вас </span>
-          <span style={{ ...sansStyle, fontWeight: 700 }}>идеальный вечер?</span>
+          <span style={serifStyle}>кто вы </span>
+          <span style={{ ...sansStyle, fontWeight: 700 }}>за столом?</span>
         </h2>
 
         <div style={optList}>
           {OPTIONS.map((opt) => {
             const isSelected = picked === opt.id
+            const iconColor = isSelected ? COLORS.cream : COLORS.ink
             return (
               <button
                 key={opt.id}
@@ -233,13 +261,10 @@ export function Quiz1() {
                 onClick={() => pick(opt.id)}
               >
                 <div style={cardRow}>
-                  <div style={iconBubble(isSelected)}>{opt.icon}</div>
+                  <div style={iconBubble(isSelected)}>{opt.icon(iconColor)}</div>
                   <div style={{ flex: 1 }}>
                     <h3 style={cardTitle}>{opt.title}</h3>
                     <p style={cardHint(isSelected)}>{opt.hint}</p>
-                    {isSelected && opt.vibe && (
-                      <span style={vibeChip}>{opt.vibe}</span>
-                    )}
                   </div>
                 </div>
               </button>
@@ -248,8 +273,8 @@ export function Quiz1() {
         </div>
 
         <div style={bottomRow}>
-          <button style={skipBtn} onClick={next}>
-            пропустить
+          <button style={backBtn} onClick={back}>
+            ← назад
           </button>
           <button style={nextBtn} onClick={next}>
             дальше
