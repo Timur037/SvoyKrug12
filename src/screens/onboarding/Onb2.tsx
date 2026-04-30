@@ -11,7 +11,7 @@ export function Onb2() {
     position: 'relative',
     width: '100%',
     height: '100dvh',
-    background: COLORS.forest,
+    background: COLORS.ink,
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
@@ -29,7 +29,7 @@ export function Onb2() {
     position: 'absolute',
     inset: 0,
     background:
-      'linear-gradient(180deg, rgba(45,74,62,0.18) 0%, rgba(45,74,62,0.55) 70%, rgba(45,74,62,0.95) 100%)',
+      'linear-gradient(180deg, rgba(26,22,18,0.18) 0%, rgba(26,22,18,0.55) 70%, rgba(26,22,18,0.95) 100%)',
   }
   const overline: CSSProperties = {
     ...sansStyle,
@@ -47,7 +47,7 @@ export function Onb2() {
   const bottom: CSSProperties = {
     position: 'relative',
     flex: '0 0 52%',
-    background: COLORS.forest,
+    background: COLORS.ink,
     color: COLORS.cream,
     padding: '40px 30px 110px',
     display: 'flex',
@@ -86,7 +86,7 @@ export function Onb2() {
     height: 64,
     borderRadius: '50%',
     background: COLORS.honey,
-    color: COLORS.forestDeep,
+    color: COLORS.ink,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -148,7 +148,7 @@ export function Onb2() {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path
                 d="M5 12h14M13 6l6 6-6 6"
-                stroke={COLORS.forestDeep}
+                stroke={COLORS.ink}
                 strokeWidth="1.8"
                 strokeLinecap="round"
                 strokeLinejoin="round"
