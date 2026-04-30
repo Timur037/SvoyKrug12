@@ -108,8 +108,8 @@ export function HomeScreen() {
             100% { box-shadow: 0 0 0 0 rgba(232,71,44,0); }
           }
           @keyframes cardIn {
-            from { opacity: 0; }
-            to   { opacity: 1; }
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
           }
           @keyframes shimmer {
             0% { background-position: -200% 0; }
@@ -210,16 +210,16 @@ export function HomeScreen() {
           </button>
         </div>
 
-        {/* Stacked card deck */}
+        {/* Card list */}
         <div style={{
           flex: 1,
-          position: 'relative',
-          margin: '14px 22px 0',
           overflowY: 'auto',
           overflowX: 'hidden',
-          scrollbarWidth: 'none',
-          minHeight: displayCircles.length * 72 + 240 + 90,
-          paddingBottom: 90,
+          scrollbarWidth: 'none' as const,
+          padding: '8px 22px 100px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 16,
         }}>
           {showSkeleton && (
             <>
@@ -228,18 +228,14 @@ export function HomeScreen() {
                   key={`skeleton-${i}`}
                   aria-hidden="true"
                   style={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    top: 8 + i * 72,
                     height: 240,
                     borderRadius: 24,
+                    flexShrink: 0,
                     border: '1px solid rgba(26,22,18,0.06)',
                     boxShadow: '0 14px 38px rgba(26,22,18,0.10)',
                     background: 'linear-gradient(90deg, #EFE6D8 25%, #F5EFE6 50%, #EFE6D8 75%)',
                     backgroundSize: '200% 100%',
                     animation: 'shimmer 1.6s linear infinite',
-                    zIndex: 10 - i,
                   }}
                 />
               ))}
@@ -254,23 +250,20 @@ export function HomeScreen() {
                 key={c.id}
                 onClick={() => openCircle(c.id)}
                 style={{
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  top: 8 + i * 72,
+                  position: 'relative',
+                  width: '100%',
                   height: 240,
+                  flexShrink: 0,
                   borderRadius: 24,
                   overflow: 'hidden',
-                  transform: `rotate(${c.tilt}deg)`,
                   boxShadow: '0 16px 42px rgba(26,22,18,0.20), 0 4px 12px rgba(26,22,18,0.08)',
                   border: '1px solid rgba(26,22,18,0.05)',
                   background: '#000',
-                  zIndex: 10 - i,
                   padding: 0,
                   display: 'block',
                   textAlign: 'left',
                   cursor: 'pointer',
-                  animation: `cardIn 400ms ease ${i * 80}ms both`,
+                  animation: `cardIn 480ms cubic-bezier(0.22,1,0.36,1) ${i * 90}ms both`,
                 }}
                 aria-label={`${c.title}, ${c.kind} ${c.time_short}`}
               >
