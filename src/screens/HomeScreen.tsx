@@ -13,9 +13,14 @@ import type { DbCircle } from '../lib/db'
 import { MOCK_CIRCLES } from '../lib/mockCircles'
 import { useUser } from '../context/UserContext'
 
-const MOODS = [
-  { id: 'live', label: 'оживлённо', bg: COLORS.tomato, fg: COLORS.cream },
-  { id: 'calm', label: 'спокойно', bg: COLORS.ink, fg: COLORS.cream },
+const CATEGORIES = [
+  { id: 'all',      label: 'все',       emoji: '' },
+  { id: 'УЖИН',     label: 'ужин',      emoji: '🍽' },
+  { id: 'КОФЕ',     label: 'кофе',      emoji: '☕' },
+  { id: 'БРАНЧ',    label: 'бранч',     emoji: '🥐' },
+  { id: 'ПРОГУЛКА', label: 'прогулка',  emoji: '🌿' },
+  { id: 'НАСТОЛКИ', label: 'настолки',  emoji: '🎲' },
+  { id: 'ВЕЧЕР',    label: 'вечер',     emoji: '🕯' },
 ] as const
 
 type GreetingPart = { lead: string; name: string }
@@ -43,7 +48,7 @@ function isToday(c: DbCircle): boolean {
 }
 
 export function HomeScreen() {
-  const [activeMood, setActiveMood] = useState<string>('live')
+  const [activeCategory, setActiveCategory] = useState<string>('all')
   const [_circles, setCircles] = useState<DbCircle[]>([])
   const [loaded, setLoaded] = useState<boolean>(true)
   const navigate = useNavigate()
@@ -61,7 +66,9 @@ export function HomeScreen() {
       })
   }, [])
 
-  const displayCircles = MOCK_CIRCLES
+  const displayCircles = activeCategory === 'all'
+    ? MOCK_CIRCLES
+    : MOCK_CIRCLES.filter((c) => c.kind === activeCategory)
 
   const greeting = getGreeting(user?.name ?? 'гость')
   const timeGradient = getTimeGradient(new Date().getHours())
@@ -136,7 +143,7 @@ export function HomeScreen() {
           </div>
         </div>
 
-        {/* Mood chips */}
+        {/* Category chips */}
         <div style={{
           padding: '18px 28px 6px',
           display: 'flex',
@@ -146,11 +153,11 @@ export function HomeScreen() {
           position: 'relative',
           zIndex: 2,
         }}>
-          {MOODS.map((m) => {
-            const isActive = activeMood === m.id
+          {CATEGORIES.map((cat) => {
+            const isActive = activeCategory === cat.id
             return (
               <button
-                key={m.id}
+                key={cat.id}
                 style={{
                   ...sansStyle,
                   WebkitAppearance: 'none',
@@ -158,12 +165,13 @@ export function HomeScreen() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  gap: 5,
                   lineHeight: 1,
                   padding: '9px 16px',
                   borderRadius: 99,
-                  background: isActive ? m.bg : 'rgba(255,255,255,0.85)',
-                  color: isActive ? m.fg : COLORS.ink,
-                  WebkitTextFillColor: isActive ? m.fg : COLORS.ink,
+                  background: isActive ? COLORS.ink : 'rgba(255,255,255,0.85)',
+                  color: isActive ? COLORS.cream : COLORS.ink,
+                  WebkitTextFillColor: isActive ? COLORS.cream : COLORS.ink,
                   fontSize: 12,
                   fontWeight: 600,
                   border: isActive ? '1px solid transparent' : '1px solid rgba(26,22,18,0.10)',
@@ -172,9 +180,10 @@ export function HomeScreen() {
                   boxShadow: isActive ? '0 6px 16px rgba(26,22,18,0.15)' : '0 2px 6px rgba(26,22,18,0.06)',
                   transform: isActive ? 'scale(1.04)' : 'scale(1)',
                 }}
-                onClick={() => { haptic('light'); setActiveMood(m.id) }}
+                onClick={() => { haptic('light'); setActiveCategory(cat.id) }}
               >
-                {m.label}
+                {cat.emoji && <span aria-hidden="true">{cat.emoji}</span>}
+                {cat.label}
               </button>
             )
           })}
