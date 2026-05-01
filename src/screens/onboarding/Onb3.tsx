@@ -12,9 +12,9 @@ type Seat = {
   cy: number
 }
 
-const TABLE_CONTAINER = 350
+const TABLE_CONTAINER = 300
 const TABLE_CENTER = TABLE_CONTAINER / 2
-const SEAT_RADIUS = 148
+const SEAT_RADIUS = 120
 const TABLE_RADIUS = 88
 
 type SeatRaw = Pick<Seat, 'name' | 'initial' | 'bg'>
@@ -47,6 +47,28 @@ export function Onb3() {
     background: COLORS.ink,
     color: COLORS.cream,
     overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+  }
+
+  const mainContent: CSSProperties = {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    paddingTop: 80,
+    paddingBottom: 90,
+    minHeight: 0,
+    position: 'relative',
+    zIndex: 1,
+  }
+
+  const tableSection: CSSProperties = {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 0,
+    overflow: 'visible',
   }
 
   const warmGlow: CSSProperties = {
@@ -87,10 +109,7 @@ export function Onb3() {
   }
 
   const tableWrap: CSSProperties = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -52%)',
+    position: 'relative',
     zIndex: 2,
     width: TABLE_CONTAINER,
     height: TABLE_CONTAINER,
@@ -127,10 +146,8 @@ export function Onb3() {
   }
 
   const bottomBlock: CSSProperties = {
-    position: 'absolute',
-    bottom: 110,
-    left: 28,
-    right: 28,
+    flexShrink: 0,
+    padding: '0 28px',
     zIndex: 4,
   }
 
@@ -237,13 +254,15 @@ export function Onb3() {
           to{opacity:1;transform:scale(1)}
         }
         @keyframes tableIn {
-          from{opacity:0;transform:translate(-50%,-52%) scale(0.75)}
-          to{opacity:1;transform:translate(-50%,-52%) scale(1)}
+          from{opacity:0;transform:scale(0.75)}
+          to{opacity:1;transform:scale(1)}
         }
       `}</style>
 
       <span style={overline}>идея в одной цифре · 03</span>
 
+      <div style={mainContent}>
+      <div style={tableSection}>
       <div style={tableWrap}>
         <svg
           style={{
@@ -329,6 +348,7 @@ export function Onb3() {
           </div>
         ))}
       </div>
+      </div>{/* tableSection */}
 
       <div style={bottomBlock}>
         <div style={separator} />
@@ -339,6 +359,7 @@ export function Onb3() {
           <span style={vibeText}>тёплый формат</span>
         </div>
       </div>
+      </div>{/* mainContent */}
 
       <div style={bottomRow}>
         <span style={dotsWrap}>
