@@ -127,7 +127,7 @@ export function OnbGender() {
       </div>
 
       <div style={content}>
-        <h1 style={title}>как вы себя называете?</h1>
+        <h1 style={title}>кто вы?</h1>
 
         <div style={optionsWrap}>
           {OPTIONS.map((opt) => {
