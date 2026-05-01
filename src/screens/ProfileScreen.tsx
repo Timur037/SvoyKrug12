@@ -32,6 +32,13 @@ function useCountUp(target: number, duration = 900, delay = 0): number {
 
 type StickerKind = 'tomato' | 'ink' | 'cream' | 'forest' | 'honey'
 
+const KINDS: StickerKind[] = ['tomato', 'ink', 'forest', 'honey', 'cream']
+
+function cycleKind(current: StickerKind): StickerKind {
+  const idx = KINDS.indexOf(current)
+  return KINDS[(idx + 1) % KINDS.length]
+}
+
 interface VibeTag {
   t: string
   size: number
@@ -107,6 +114,18 @@ export function ProfileScreen() {
     color: COLORS.ink,
     overflowX: 'hidden',
     overflowY: 'auto',
+  }
+
+  function removeVibe(i: number) {
+    haptic('light')
+    setTags((prev) => prev.filter((_, idx) => idx !== i))
+  }
+
+  function changeVibe(i: number) {
+    haptic('light')
+    setTags((prev) => prev.map((tag, idx) =>
+      idx === i ? { ...tag, kind: cycleKind(tag.kind) } : tag
+    ))
   }
 
   function addVibe() {
@@ -294,32 +313,63 @@ export function ProfileScreen() {
             {tags.map((tag, i) => {
               const p = palette(tag.kind)
               return (
-                <button
+                <div
                   key={`${tag.t}-${i}`}
-                  style={{
-                    background: p.bg,
-                    color: p.c,
-                    border: p.br,
-                    padding: padFor(tag.size),
-                    borderRadius: 14,
-                    ...sansStyle,
-                    fontStyle: 'italic',
-                    fontWeight: 600,
-                    fontSize: tag.size,
-                    letterSpacing: '-0.01em',
-                    transform: `rotate(${tag.rot}deg)`,
-                    boxShadow: p.shadow,
-                    cursor: 'pointer',
-                    transition: 'transform .25s ease',
-                    display: 'inline-block',
-                    whiteSpace: 'nowrap',
-                  }}
-                  onClick={() => haptic('light')}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = `rotate(${tag.rot * 0.4}deg) scale(1.04)` }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = `rotate(${tag.rot}deg) scale(1)` }}
+                  style={{ position: 'relative', display: 'inline-block' }}
                 >
-                  {tag.t}
-                </button>
+                  <button
+                    style={{
+                      background: p.bg,
+                      color: p.c,
+                      border: p.br,
+                      padding: padFor(tag.size),
+                      borderRadius: 14,
+                      ...sansStyle,
+                      fontStyle: 'italic',
+                      fontWeight: 600,
+                      fontSize: tag.size,
+                      letterSpacing: '-0.01em',
+                      transform: `rotate(${tag.rot}deg)`,
+                      boxShadow: p.shadow,
+                      cursor: 'pointer',
+                      transition: 'transform .25s ease',
+                      display: 'inline-block',
+                      whiteSpace: 'nowrap',
+                    }}
+                    onClick={() => changeVibe(i)}
+                    title="нажмите чтобы сменить цвет"
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = `rotate(${tag.rot * 0.4}deg) scale(1.04)` }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = `rotate(${tag.rot}deg) scale(1)` }}
+                  >
+                    {tag.t}
+                  </button>
+                  <button
+                    onClick={() => removeVibe(i)}
+                    aria-label="удалить вайб"
+                    style={{
+                      position: 'absolute',
+                      top: -7,
+                      right: -7,
+                      width: 20,
+                      height: 20,
+                      borderRadius: '50%',
+                      background: COLORS.ink,
+                      color: COLORS.cream,
+                      border: `2px solid ${COLORS.cream}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 10,
+                      fontWeight: 700,
+                      lineHeight: 1,
+                      cursor: 'pointer',
+                      zIndex: 2,
+                      padding: 0,
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
               )
             })}
             <button
