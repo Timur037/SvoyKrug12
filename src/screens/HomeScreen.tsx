@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
-import type { CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { COLORS, serifStyle, sansStyle } from '../theme'
+import { COLORS, SHADOWS, RADII, serifStyle, sansStyle, overlineStyle } from '../theme'
 import { Grain } from '../components/Grain'
 import { TabBar } from '../components/TabBar'
 import { Seats } from '../components/Seats'
@@ -35,13 +34,6 @@ function getGreeting(name: string = 'гость', date: Date = new Date()): Gree
   return { lead: 'ночной круг,', name: display }
 }
 
-function getTimeGradient(h: number): string {
-  if (h >= 5 && h < 9)   return 'radial-gradient(ellipse at 55% 0%, rgba(244,201,93,0.28) 0%, transparent 65%)'
-  if (h >= 9 && h < 17)  return 'none'
-  if (h >= 17 && h < 21) return 'radial-gradient(ellipse at 50% 0%, rgba(232,71,44,0.12) 0%, rgba(244,201,93,0.08) 40%, transparent 70%)'
-  return 'radial-gradient(ellipse at 50% 0%, rgba(26,22,18,0.10) 0%, transparent 60%)'
-}
-
 function isToday(c: DbCircle): boolean {
   const t = c.time_short?.toLowerCase() ?? ''
   return t.includes('сегодня')
@@ -56,14 +48,8 @@ export function HomeScreen() {
 
   useEffect(() => {
     fetchCircles()
-      .then((data) => {
-        setCircles(data)
-        setLoaded(true)
-      })
-      .catch((err) => {
-        console.error(err)
-        setLoaded(true)
-      })
+      .then((data) => { setCircles(data); setLoaded(true) })
+      .catch((err) => { console.error(err); setLoaded(true) })
   }, [])
 
   const displayCircles = activeCategory === 'all'
@@ -71,18 +57,6 @@ export function HomeScreen() {
     : MOCK_CIRCLES.filter((c) => c.kind === activeCategory)
 
   const greeting = getGreeting(user?.name ?? 'гость')
-  const timeGradient = getTimeGradient(new Date().getHours())
-
-  const root: CSSProperties = {
-    position: 'relative',
-    width: '100%',
-    height: '100dvh',
-    background: COLORS.cream,
-    color: COLORS.ink,
-    overflowX: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-  }
 
   function openCircle(id: string) {
     haptic('light')
@@ -94,64 +68,146 @@ export function HomeScreen() {
 
   return (
     <PageTransition>
-      <div style={root}>
-        <Grain opacity={0.3} />
-        {timeGradient !== 'none' && (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 280,
-            background: timeGradient,
-            pointerEvents: 'none',
-            zIndex: 1,
-          }} />
-        )}
+      <div style={{
+        position: 'relative',
+        width: '100%',
+        height: '100dvh',
+        background: COLORS.cream,
+        color: COLORS.ink,
+        overflowX: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
+        <Grain opacity={0.25} />
+
+        {/* Ambient warm glow top */}
+        <div style={{
+          position: 'absolute',
+          top: -60,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 480,
+          height: 320,
+          background: 'radial-gradient(ellipse at center, rgba(232,71,44,0.13) 0%, rgba(244,201,93,0.07) 45%, transparent 72%)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }} />
+
         <style>{`
           @keyframes pulse-dot {
             0% { box-shadow: 0 0 0 0 rgba(232,71,44,0.55); }
-            70% { box-shadow: 0 0 0 8px rgba(232,71,44,0); }
+            70% { box-shadow: 0 0 0 9px rgba(232,71,44,0); }
             100% { box-shadow: 0 0 0 0 rgba(232,71,44,0); }
           }
           @keyframes cardIn {
-            from { opacity: 0; transform: translateY(24px); }
+            from { opacity: 0; transform: translateY(20px); }
             to   { opacity: 1; transform: translateY(0); }
           }
           @keyframes shimmer {
             0% { background-position: -200% 0; }
             100% { background-position: 200% 0; }
           }
+          @keyframes heroIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
         `}</style>
 
-        {/* Greeting */}
-        <div style={{ padding: '60px 28px 0', position: 'relative', zIndex: 2 }}>
-          <h1 style={{ margin: 0, fontSize: 42, lineHeight: 0.96, letterSpacing: '-0.025em', color: COLORS.ink }}>
-            <span style={serifStyle}>{greeting.lead}</span>
-            <br />
-            <span style={serifStyle}>{greeting.name}</span>
-          </h1>
-          <div style={{ ...sansStyle, fontSize: 13, color: COLORS.inkSoft, marginTop: 8, fontWeight: 500 }}>
-            {!loaded ? (
-              <>ищем вечера в Москве...</>
-            ) : (
-              <>в Москве{' '}
-                <span style={{ color: COLORS.ink, fontWeight: 700 }}>
-                  {displayCircles.length} {displayCircles.length === 1 ? 'круг' : displayCircles.length < 5 ? 'круга' : 'кругов'}
-                </span>{' '}на этой неделе</>
-            )}
+        {/* ── Hero ── */}
+        <div style={{
+          padding: '56px 26px 0',
+          position: 'relative',
+          zIndex: 2,
+          animation: 'heroIn 550ms cubic-bezier(0.22,1,0.36,1) both',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+            <h1 style={{ margin: 0, flex: 1 }}>
+              <span style={{ ...serifStyle, display: 'block', fontSize: 44, lineHeight: 0.94, letterSpacing: '-0.025em', color: COLORS.ink }}>
+                {greeting.lead}
+              </span>
+              <span style={{ ...serifStyle, display: 'block', fontSize: 44, lineHeight: 0.94, letterSpacing: '-0.025em', color: COLORS.ink }}>
+                {greeting.name}
+              </span>
+            </h1>
+
+            {/* Notification bell */}
+            <button
+              style={{
+                marginTop: 4,
+                width: 38,
+                height: 38,
+                borderRadius: RADII.full,
+                background: COLORS.white,
+                border: `1px solid rgba(26,22,18,0.08)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: SHADOWS.chip,
+                flexShrink: 0,
+              }}
+              onClick={() => haptic('light')}
+              aria-label="Уведомления"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke={COLORS.inkSoft} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Social proof row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 7,
+              background: COLORS.white,
+              border: `1px solid rgba(26,22,18,0.07)`,
+              borderRadius: RADII.full,
+              padding: '7px 13px 7px 10px',
+              boxShadow: SHADOWS.chip,
+            }}>
+              <span style={{
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                background: COLORS.tomato,
+                flexShrink: 0,
+                animation: 'pulse-dot 2.6s ease-out infinite',
+              }} />
+              <span style={{ ...sansStyle, fontSize: 12, fontWeight: 600, color: COLORS.ink }}>
+                {displayCircles.length}{' '}
+                <span style={{ color: COLORS.inkSoft, fontWeight: 500 }}>
+                  {displayCircles.length === 1 ? 'круг' : displayCircles.length < 5 ? 'круга' : 'кругов'} на этой неделе
+                </span>
+              </span>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              background: COLORS.white,
+              border: `1px solid rgba(26,22,18,0.07)`,
+              borderRadius: RADII.full,
+              padding: '7px 13px',
+              boxShadow: SHADOWS.chip,
+            }}>
+              <span style={{ ...sansStyle, fontSize: 12, fontWeight: 600, color: COLORS.inkSoft }}>📍 Москва</span>
+            </div>
           </div>
         </div>
 
-        {/* Category chips */}
+        {/* ── Category filter ── */}
         <div style={{
-          padding: '18px 28px 6px',
+          padding: '18px 0 4px',
           display: 'flex',
           gap: 8,
           overflowX: 'auto',
           scrollbarWidth: 'none',
           position: 'relative',
           zIndex: 2,
+          paddingLeft: 26,
+          paddingRight: 26,
         }}>
           {CATEGORIES.map((cat) => {
             const isActive = activeCategory === cat.id
@@ -164,96 +220,95 @@ export function HomeScreen() {
                   appearance: 'none',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 5,
-                  lineHeight: 1,
+                  gap: 6,
                   padding: '9px 16px',
-                  borderRadius: 99,
-                  background: isActive ? COLORS.ink : 'rgba(255,255,255,0.85)',
+                  borderRadius: RADII.full,
+                  background: isActive ? COLORS.ink : COLORS.white,
                   color: isActive ? COLORS.cream : COLORS.ink,
                   WebkitTextFillColor: isActive ? COLORS.cream : COLORS.ink,
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: 600,
-                  border: isActive ? '1px solid transparent' : '1px solid rgba(26,22,18,0.10)',
+                  letterSpacing: '-0.02em',
+                  border: isActive ? '1.5px solid transparent' : `1.5px solid rgba(26,22,18,0.09)`,
                   flexShrink: 0,
-                  transition: 'all 220ms cubic-bezier(0.22,1,0.36,1)',
-                  boxShadow: isActive ? '0 6px 16px rgba(26,22,18,0.15)' : '0 2px 6px rgba(26,22,18,0.06)',
-                  transform: isActive ? 'scale(1.04)' : 'scale(1)',
+                  transition: 'all 200ms cubic-bezier(0.22,1,0.36,1)',
+                  boxShadow: isActive ? '0 4px 14px rgba(26,22,18,0.20)' : SHADOWS.chip,
+                  transform: isActive ? 'scale(1.03)' : 'scale(1)',
+                  cursor: 'pointer',
                 }}
                 onClick={() => { haptic('light'); setActiveCategory(cat.id) }}
               >
-                {cat.emoji && <span aria-hidden="true">{cat.emoji}</span>}
+                {cat.emoji && <span aria-hidden="true" style={{ fontSize: 14 }}>{cat.emoji}</span>}
                 {cat.label}
               </button>
             )
           })}
         </div>
 
-        {/* Section title */}
+        {/* ── Section label ── */}
         <div style={{
-          padding: '18px 28px 6px',
+          padding: '16px 26px 8px',
           display: 'flex',
-          alignItems: 'baseline',
+          alignItems: 'center',
           justifyContent: 'space-between',
+          position: 'relative',
+          zIndex: 2,
         }}>
-          <span style={{
-            ...sansStyle,
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.18em',
-            color: COLORS.inkSoft,
-            textTransform: 'uppercase',
-          }}>ближайшие круги</span>
+          <span style={{ ...overlineStyle, color: COLORS.inkSoft }}>ближайшие круги</span>
           <button
             style={{
               ...sansStyle,
               fontSize: 12,
-              color: COLORS.tomato,
               fontWeight: 600,
+              color: COLORS.tomato,
               background: 'transparent',
               border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 3,
+              cursor: 'pointer',
             }}
             onClick={() => { haptic('light'); navigate('/calendar') }}
           >
-            все {displayCircles.length} →
+            все {displayCircles.length}
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12h14M13 6l6 6-6 6" stroke={COLORS.tomato} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
         </div>
 
-        {/* Card list */}
+        {/* ── Card list ── */}
         <div style={{
           flex: 1,
           overflowY: 'auto',
           overflowX: 'hidden',
-          scrollbarWidth: 'none' as const,
-          padding: '8px 22px 100px',
+          scrollbarWidth: 'none',
+          padding: '4px 20px 108px',
           display: 'flex',
           flexDirection: 'column',
-          gap: 16,
+          gap: 14,
+          position: 'relative',
+          zIndex: 2,
         }}>
-          {showSkeleton && (
-            <>
-              {[0, 1].map((i) => (
-                <div
-                  key={`skeleton-${i}`}
-                  aria-hidden="true"
-                  style={{
-                    height: 240,
-                    borderRadius: 24,
-                    flexShrink: 0,
-                    border: '1px solid rgba(26,22,18,0.06)',
-                    boxShadow: '0 14px 38px rgba(26,22,18,0.10)',
-                    background: 'linear-gradient(90deg, #EFE6D8 25%, #F5EFE6 50%, #EFE6D8 75%)',
-                    backgroundSize: '200% 100%',
-                    animation: 'shimmer 1.6s linear infinite',
-                  }}
-                />
-              ))}
-            </>
-          )}
+          {showSkeleton && [0, 1].map((i) => (
+            <div
+              key={`skeleton-${i}`}
+              aria-hidden="true"
+              style={{
+                height: 240,
+                borderRadius: RADII.xl,
+                flexShrink: 0,
+                background: 'linear-gradient(90deg, #EFE6D8 25%, #F5EFE6 50%, #EFE6D8 75%)',
+                backgroundSize: '200% 100%',
+                animation: 'shimmer 1.6s linear infinite',
+              }}
+            />
+          ))}
 
           {!showSkeleton && displayCircles.map((c, i) => {
             const today = isToday(c)
             const remaining = Math.max(0, c.seats - c.taken)
+            const almostFull = remaining <= 2 && remaining > 0
             return (
               <button
                 key={c.id}
@@ -261,21 +316,22 @@ export function HomeScreen() {
                 style={{
                   position: 'relative',
                   width: '100%',
-                  height: 240,
+                  height: 244,
                   flexShrink: 0,
-                  borderRadius: 24,
+                  borderRadius: RADII.xl,
                   overflow: 'hidden',
-                  boxShadow: '0 16px 42px rgba(26,22,18,0.20), 0 4px 12px rgba(26,22,18,0.08)',
-                  border: '1px solid rgba(26,22,18,0.05)',
-                  background: '#000',
+                  boxShadow: SHADOWS.card,
+                  border: '1px solid rgba(26,22,18,0.04)',
+                  background: COLORS.ink,
                   padding: 0,
                   display: 'block',
                   textAlign: 'left',
                   cursor: 'pointer',
-                  animation: `cardIn 480ms cubic-bezier(0.22,1,0.36,1) ${i * 90}ms both`,
+                  animation: `cardIn 460ms cubic-bezier(0.22,1,0.36,1) ${i * 80}ms both`,
                 }}
                 aria-label={`${c.title}, ${c.kind} ${c.time_short}`}
               >
+                {/* Photo */}
                 <img
                   src={c.photo ?? ''}
                   alt=""
@@ -285,163 +341,203 @@ export function HomeScreen() {
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
-                    filter: 'saturate(1.05) brightness(0.92) sepia(0.06)',
+                    filter: 'saturate(1.08) brightness(0.88)',
                   }}
                 />
+
+                {/* Gradient overlays */}
                 <div style={{
                   position: 'absolute',
                   inset: 0,
-                  background: 'linear-gradient(180deg, rgba(232,71,44,0) 30%, rgba(26,22,18,0.72) 100%)',
+                  background: 'linear-gradient(180deg, rgba(26,22,18,0.08) 0%, rgba(26,22,18,0.30) 45%, rgba(26,22,18,0.82) 100%)',
                 }} />
                 <div style={{
                   position: 'absolute',
                   inset: 0,
-                  background: 'linear-gradient(180deg, rgba(244,201,93,0.10), rgba(232,71,44,0.06))',
-                  mixBlendMode: 'soft-light' as const,
+                  background: 'linear-gradient(135deg, rgba(244,201,93,0.08) 0%, transparent 50%)',
                 }} />
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    padding: '18px 20px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    color: COLORS.cream,
-                    textAlign: 'left',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+
+                {/* Inner content */}
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  padding: '16px 18px 18px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                }}>
+                  {/* Top badges */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                     {today && (
                       <span style={{
                         ...sansStyle,
-                        padding: '5px 10px',
-                        borderRadius: 99,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 5,
+                        padding: '5px 11px',
+                        borderRadius: RADII.full,
                         background: COLORS.tomato,
                         color: COLORS.cream,
                         fontSize: 10,
                         fontWeight: 700,
-                        letterSpacing: '0.14em',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 6,
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase',
                       }}>
-                        <span style={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: '50%',
-                          background: COLORS.cream,
-                          display: 'inline-block',
-                        }} />
+                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: COLORS.cream, display: 'inline-block', animation: 'pulse-dot 2.2s ease-out infinite' }} />
                         сегодня
                       </span>
                     )}
                     <span style={{
                       ...sansStyle,
-                      padding: '5px 10px',
-                      borderRadius: 99,
-                      background: today ? 'rgba(26,22,18,0.55)' : COLORS.tomato,
+                      padding: '5px 11px',
+                      borderRadius: RADII.full,
+                      background: today ? 'rgba(26,22,18,0.52)' : COLORS.tomato,
                       color: COLORS.cream,
                       fontSize: 10,
                       fontWeight: 700,
-                      letterSpacing: '0.14em',
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      backdropFilter: today ? 'blur(8px)' : undefined,
                     }}>
                       {c.kind}
                     </span>
+                    {almostFull && (
+                      <span style={{
+                        ...sansStyle,
+                        padding: '5px 11px',
+                        borderRadius: RADII.full,
+                        background: 'rgba(244,201,93,0.22)',
+                        border: '1px solid rgba(244,201,93,0.45)',
+                        color: COLORS.honey,
+                        fontSize: 10,
+                        fontWeight: 700,
+                        letterSpacing: '0.10em',
+                        textTransform: 'uppercase',
+                      }}>
+                        последние места
+                      </span>
+                    )}
                   </div>
+
+                  {/* Bottom info */}
                   <div>
+                    {/* Time line */}
+                    <div style={{
+                      ...sansStyle,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: 'rgba(245,239,230,0.65)',
+                      letterSpacing: '0.04em',
+                      marginBottom: 6,
+                      textTransform: 'uppercase',
+                    }}>
+                      {c.time_short}
+                    </div>
+
+                    {/* Title */}
                     <div style={{
                       ...serifStyle,
-                      fontSize: 30,
-                      lineHeight: 1.02,
+                      fontSize: 28,
+                      lineHeight: 1.04,
                       color: COLORS.cream,
-                      marginBottom: 6,
-                      textShadow: '0 2px 12px rgba(0,0,0,0.35)',
+                      marginBottom: 5,
+                      textShadow: '0 2px 10px rgba(0,0,0,0.30)',
                     }}>
                       {c.title}
                     </div>
+
+                    {/* Hint */}
                     <div style={{
                       ...sansStyle,
                       fontSize: 12,
-                      color: 'rgba(245,239,230,0.78)',
-                      fontWeight: 500,
-                      marginBottom: 10,
+                      color: 'rgba(245,239,230,0.72)',
+                      fontWeight: 400,
+                      marginBottom: 12,
+                      letterSpacing: '-0.01em',
                     }}>
                       {c.hint}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+
+                    {/* Bottom row: seats + price */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <Seats taken={c.taken} total={c.seats} dark />
-                        <span style={{
-                          ...sansStyle,
-                          fontSize: 10,
-                          color: 'rgba(245,239,230,0.70)',
-                          fontWeight: 500,
-                        }}>
-                          {remaining} {remaining === 1 ? 'место' : 'мест'} осталось
+                        <span style={{ ...sansStyle, fontSize: 10, color: 'rgba(245,239,230,0.60)', fontWeight: 500 }}>
+                          {remaining} {remaining === 1 ? 'место' : 'мест'} свободно
                         </span>
                       </div>
-                      <PriceChip value={c.price} dark />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <PriceChip value={c.price} dark />
+                        <div style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: RADII.full,
+                          background: 'rgba(245,239,230,0.15)',
+                          border: '1px solid rgba(245,239,230,0.22)',
+                          backdropFilter: 'blur(8px)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                            <path d="M5 12h14M13 6l6 6-6 6" stroke={COLORS.cream} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </button>
             )
           })}
+
+          {/* Empty state */}
+          {!showSkeleton && displayCircles.length === 0 && (
+            <div style={{
+              padding: '48px 0',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 10,
+            }}>
+              <div style={{ ...serifStyle, fontSize: 22, color: COLORS.inkSoft }}>кругов пока нет</div>
+              <div style={{ ...sansStyle, fontSize: 13, color: COLORS.inkSoft }}>попробуйте другой формат</div>
+            </div>
+          )}
         </div>
 
-        {/* FAB — propose an evening */}
-        <div
+        {/* ── FAB ── */}
+        <button
+          onClick={() => { haptic('medium'); navigate('/build-circle') }}
+          aria-label="Предложить вечер"
           style={{
             position: 'fixed',
-            right: 18,
-            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 92px)',
+            right: 20,
+            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 90px)',
+            width: 56,
+            height: 56,
+            borderRadius: RADII.full,
+            background: COLORS.tomato,
+            color: COLORS.cream,
+            border: 'none',
+            boxShadow: SHADOWS.fab,
             display: 'flex',
             alignItems: 'center',
-            gap: 8,
-            zIndex: 60,
+            justifyContent: 'center',
+            animation: 'pulse-dot 2.6s ease-out infinite',
+            cursor: 'pointer',
+            zIndex: 40,
           }}
         >
-          <button
-            onClick={() => { haptic('light'); navigate('/build-circle') }}
-            style={{
-              ...sansStyle,
-              background: COLORS.ink,
-              color: COLORS.cream,
-              fontSize: 12,
-              fontWeight: 600,
-              padding: '8px 14px',
-              borderRadius: 99,
-              border: 'none',
-              boxShadow: '0 6px 16px rgba(26,22,18,0.18)',
-              cursor: 'pointer',
-            }}
-          >
-            предложить вечер
-          </button>
-          <button
-            onClick={() => { haptic('medium'); navigate('/build-circle') }}
-            aria-label="Предложить вечер"
-            style={{
-              width: 60,
-              height: 60,
-              borderRadius: '50%',
-              background: COLORS.tomato,
-              color: COLORS.cream,
-              border: 'none',
-              boxShadow: '0 14px 30px rgba(232,71,44,0.45), 0 4px 12px rgba(26,22,18,0.18)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              animation: 'pulse-dot 2.4s ease-out infinite',
-              cursor: 'pointer',
-            }}
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path d="M12 5v14M5 12h14" stroke={COLORS.cream} strokeWidth="2.2" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5v14M5 12h14" stroke={COLORS.cream} strokeWidth="2.2" strokeLinecap="round" />
+          </svg>
+        </button>
 
         <TabBar active="home" notifDot />
       </div>

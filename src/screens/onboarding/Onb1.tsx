@@ -1,11 +1,22 @@
 import type { CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { COLORS, serifStyle, sansStyle } from '../../theme'
+import { COLORS, RADII, serifStyle, sansStyle } from '../../theme'
 import { Grain } from '../../components/Grain'
 import { haptic } from '../../lib/telegram'
 
+const TRUST_ITEMS = [
+  { icon: '👥', text: '847 человек в Москве' },
+  { icon: '🌿', text: 'только реальные встречи' },
+  { icon: '✦',  text: 'без свайпов и анкет' },
+]
+
 export function Onb1() {
   const navigate = useNavigate()
+
+  function go() {
+    haptic('light')
+    navigate('/onboarding/2')
+  }
 
   const root: CSSProperties = {
     position: 'relative',
@@ -14,129 +25,162 @@ export function Onb1() {
     background: COLORS.tomato,
     color: COLORS.cream,
     overflow: 'hidden',
-  }
-  const content: CSSProperties = {
-    position: 'relative',
-    zIndex: 2,
-    height: '100%',
-    padding: '90px 30px 110px',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'space-between',
-  }
-  const overline: CSSProperties = {
-    ...sansStyle,
-    textTransform: 'uppercase',
-    fontSize: 11,
-    letterSpacing: '0.16em',
-    fontWeight: 500,
-    color: 'rgba(245,239,230,0.85)',
-  }
-  const heroWrap: CSSProperties = {
-    marginTop: 22,
-  }
-  const heroLine: CSSProperties = {
-    fontSize: 64,
-    lineHeight: 0.94,
-    color: COLORS.cream,
-    margin: 0,
-    display: 'block',
-  }
-  const subtext: CSSProperties = {
-    ...sansStyle,
-    fontSize: 15,
-    lineHeight: 1.45,
-    color: 'rgba(245,239,230,0.85)',
-    maxWidth: 320,
-    marginTop: 28,
-  }
-  const bottomRow: CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  }
-  const dotsWrap: CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-  }
-  const arrowBtn: CSSProperties = {
-    width: 64,
-    height: 64,
-    borderRadius: '50%',
-    background: COLORS.cream,
-    color: COLORS.ink,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0 12px 40px rgba(26,22,18,0.18)',
-  }
-
-  function go() {
-    haptic('light')
-    navigate('/onboarding/2')
   }
 
   return (
     <div style={root}>
-      <Grain opacity={0.6} blend="multiply" />
-      <div style={content}>
+      <Grain opacity={0.55} blend="multiply" />
+
+      {/* Decorative arc — warm large circle */}
+      <div style={{
+        position: 'absolute',
+        top: -180,
+        right: -120,
+        width: 420,
+        height: 420,
+        borderRadius: '50%',
+        background: 'rgba(255,255,255,0.07)',
+        pointerEvents: 'none',
+      }} />
+      <div style={{
+        position: 'absolute',
+        top: -60,
+        right: -60,
+        width: 200,
+        height: 200,
+        borderRadius: '50%',
+        background: 'rgba(255,255,255,0.06)',
+        pointerEvents: 'none',
+      }} />
+      {/* Bottom circle decoration */}
+      <div style={{
+        position: 'absolute',
+        bottom: -140,
+        left: -80,
+        width: 360,
+        height: 360,
+        borderRadius: '50%',
+        background: 'rgba(26,22,18,0.14)',
+        pointerEvents: 'none',
+      }} />
+
+      {/* Content */}
+      <div style={{
+        position: 'relative',
+        zIndex: 2,
+        flex: 1,
+        padding: '80px 30px 40px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+      }}>
+
+        {/* Top: overline */}
         <div>
-          <span style={overline}>свой круг · 01</span>
-          <div style={heroWrap}>
-            <span style={{ ...heroLine, ...serifStyle }}>знакомиться</span>
-            <span
-              style={{
-                ...heroLine,
-                ...sansStyle,
-                fontWeight: 700,
-              }}
-            >
+          <span style={{
+            ...sansStyle,
+            textTransform: 'uppercase',
+            fontSize: 10,
+            letterSpacing: '0.18em',
+            fontWeight: 700,
+            color: 'rgba(245,239,230,0.70)',
+            display: 'block',
+            marginBottom: 28,
+          }}>
+            свой круг
+          </span>
+
+          {/* Hero headline */}
+          <div>
+            <span style={{
+              ...serifStyle,
+              display: 'block',
+              fontSize: 66,
+              lineHeight: 0.92,
+              color: COLORS.cream,
+            }}>
+              знакомиться
+            </span>
+            <span style={{
+              display: 'block',
+              fontSize: 66,
+              lineHeight: 0.92,
+              ...sansStyle,
+              fontWeight: 800,
+              letterSpacing: '-0.04em',
+              color: COLORS.cream,
+              marginTop: 6,
+            }}>
               — нормально.
             </span>
           </div>
-          <p style={subtext}>
-            маленькие вечера на 5–6 человек. без свайпов, без анкет — только
-            тёплая компания и один общий вечер.
+
+          {/* Subtext */}
+          <p style={{
+            ...sansStyle,
+            fontSize: 16,
+            lineHeight: 1.5,
+            color: 'rgba(245,239,230,0.88)',
+            maxWidth: 300,
+            marginTop: 28,
+            margin: '28px 0 0',
+          }}>
+            маленькие вечера на 5–6 человек. один общий стол, тёплая компания — без лишнего.
           </p>
         </div>
 
-        <div style={bottomRow}>
-          <span style={dotsWrap}>
-            <span
+        {/* Trust chips */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {TRUST_ITEMS.map((item) => (
+            <div
+              key={item.text}
               style={{
-                width: 24,
-                height: 8,
-                borderRadius: 4,
-                background: COLORS.cream,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 10,
+                background: 'rgba(245,239,230,0.12)',
+                border: '1px solid rgba(245,239,230,0.18)',
+                borderRadius: RADII.full,
+                padding: '9px 16px',
+                width: 'fit-content',
               }}
-            />
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: 4,
-                background: 'rgba(245,239,230,0.45)',
-              }}
-            />
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: 4,
-                background: 'rgba(245,239,230,0.45)',
-              }}
-            />
-          </span>
-          <button style={arrowBtn} onClick={go} aria-label="Дальше">
+            >
+              <span style={{ fontSize: 14, lineHeight: 1 }}>{item.icon}</span>
+              <span style={{ ...sansStyle, fontSize: 13, fontWeight: 500, color: 'rgba(245,239,230,0.92)' }}>
+                {item.text}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom row: dots + CTA */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 32 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span style={{ width: 24, height: 8, borderRadius: 4, background: COLORS.cream, display: 'inline-block' }} />
+            <span style={{ width: 8, height: 8, borderRadius: 4, background: 'rgba(245,239,230,0.38)', display: 'inline-block' }} />
+            <span style={{ width: 8, height: 8, borderRadius: 4, background: 'rgba(245,239,230,0.38)', display: 'inline-block' }} />
+          </div>
+
+          <button
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: RADII.full,
+              background: COLORS.cream,
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 14px 40px rgba(26,22,18,0.22)',
+              cursor: 'pointer',
+            }}
+            onClick={go}
+            aria-label="Дальше"
+          >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M5 12h14M13 6l6 6-6 6"
-                stroke={COLORS.ink}
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+              <path d="M5 12h14M13 6l6 6-6 6" stroke={COLORS.ink} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         </div>
