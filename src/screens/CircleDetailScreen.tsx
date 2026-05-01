@@ -185,18 +185,17 @@ export function CircleDetailScreen() {
 
         {/* Info row */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 28 }}>
-          {circle.place && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 7,
-              background: 'rgba(245,239,230,0.07)', border: '1px solid rgba(245,239,230,0.12)',
-              borderRadius: RADII.full, padding: '8px 14px',
-            }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="rgba(245,239,230,0.55)" />
-              </svg>
-              <span style={{ ...sansStyle, fontSize: 13, color: 'rgba(245,239,230,0.80)', fontWeight: 500 }}>{circle.place}</span>
-            </div>
-          )}
+          {/* Location hidden until 4h before — show teaser */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 7,
+            background: 'rgba(245,239,230,0.07)', border: '1px solid rgba(245,239,230,0.12)',
+            borderRadius: RADII.full, padding: '8px 14px',
+          }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="rgba(245,239,230,0.35)" />
+            </svg>
+            <span style={{ ...sansStyle, fontSize: 13, color: 'rgba(245,239,230,0.50)', fontWeight: 500 }}>место — за 4 часа до встречи</span>
+          </div>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 7,
             background: 'rgba(244,201,93,0.10)', border: '1px solid rgba(244,201,93,0.22)',
@@ -266,7 +265,7 @@ export function CircleDetailScreen() {
               {upcomingMeetup.title}
             </div>
             <div style={{ ...sansStyle, fontSize: 13, color: 'rgba(245,239,230,0.60)', marginBottom: 14 }}>
-              {upcomingMeetup.date_label} · {upcomingMeetup.place}
+              {upcomingMeetup.date_label} · место придёт за 4 часа
             </div>
             <button
               onClick={() => { haptic('light'); navigate('/chat') }}

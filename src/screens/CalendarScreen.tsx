@@ -181,7 +181,7 @@ export function CalendarScreen() {
                   <div style={{ position: 'relative', zIndex: 2 }}>
                     <div style={{ ...overlineStyle, color: 'rgba(245,239,230,0.55)', marginBottom: 8 }}>{upcoming.date_label}</div>
                     <div style={{ ...serifStyle, fontSize: 28, lineHeight: 1.05, color: COLORS.cream, marginBottom: 4 }}>{upcoming.title}</div>
-                    <div style={{ ...sansStyle, fontSize: 12, color: 'rgba(245,239,230,0.60)', marginBottom: 16 }}>{upcoming.place}</div>
+                    <div style={{ ...sansStyle, fontSize: 12, color: 'rgba(245,239,230,0.45)', marginBottom: 16 }}>📍 место — за 4 часа до встречи</div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <Seats taken={upcoming.taken} total={upcoming.seats} dark />
                       <span style={{ ...sansStyle, background: COLORS.tomato, color: COLORS.cream, padding: '10px 18px', borderRadius: RADII.full, fontSize: 13, fontWeight: 700, boxShadow: SHADOWS.cta }}>
