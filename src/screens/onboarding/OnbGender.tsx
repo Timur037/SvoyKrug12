@@ -4,7 +4,7 @@ import { COLORS, RADII, SHADOWS, serifStyle, sansStyle } from '../../theme'
 import { OnbShell } from '../../components/OnbShell'
 import { haptic } from '../../lib/telegram'
 
-const OPTIONS = ['мужчина', 'женщина', 'другое'] as const
+const OPTIONS = ['мужчина', 'женщина', 'небинарный'] as const
 
 export function OnbGender() {
   const navigate = useNavigate()
