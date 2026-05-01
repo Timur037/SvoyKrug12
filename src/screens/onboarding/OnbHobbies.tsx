@@ -26,13 +26,15 @@ const HOBBIES: { emoji: string; label: string }[] = [
   { emoji: '🐾', label: 'животные' },
 ]
 
-const MAX_PICK = 5
+const MAX_PICK = 10
 const STEP = 1
 const TOTAL = 4
 
 export function OnbHobbies() {
   const navigate = useNavigate()
   const [picked, setPicked] = useState<string[]>([])
+  const [customInput, setCustomInput] = useState('')
+  const [customTags, setCustomTags] = useState<string[]>([])
 
   function toggle(label: string) {
     haptic('light')
@@ -41,6 +43,15 @@ export function OnbHobbies() {
       if (prev.length >= MAX_PICK) return prev
       return [...prev, label]
     })
+  }
+
+  function addCustom() {
+    const val = customInput.trim().toLowerCase()
+    if (!val || picked.length >= MAX_PICK || customTags.includes(val) || HOBBIES.some(h => h.label === val)) return
+    haptic('light')
+    setCustomTags((prev) => [...prev, val])
+    setPicked((prev) => [...prev, val])
+    setCustomInput('')
   }
 
   function next() {
@@ -202,7 +213,7 @@ export function OnbHobbies() {
         </div>
 
         <div style={tagsWrap}>
-          {HOBBIES.map(({ emoji, label }) => {
+          {[...HOBBIES, ...customTags.map(t => ({ emoji: '✨', label: t }))].map(({ emoji, label }) => {
             const selected = picked.includes(label)
             const disabled = !selected && picked.length >= MAX_PICK
             const tagStyle: CSSProperties = {
@@ -237,6 +248,55 @@ export function OnbHobbies() {
               </button>
             )
           })}
+        </div>
+
+        {/* Custom input */}
+        <div style={{
+          display: 'flex',
+          gap: 8,
+          marginTop: 20,
+          alignItems: 'center',
+        }}>
+          <input
+            value={customInput}
+            onChange={(e) => setCustomInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') addCustom() }}
+            placeholder="своё увлечение..."
+            maxLength={30}
+            style={{
+              ...sansStyle,
+              flex: 1,
+              height: 44,
+              borderRadius: 99,
+              border: '1.5px solid rgba(26,22,18,0.12)',
+              background: '#fff',
+              padding: '0 16px',
+              fontSize: 14,
+              color: COLORS.ink,
+              outline: 'none',
+            } as CSSProperties}
+          />
+          <button
+            onClick={addCustom}
+            disabled={!customInput.trim() || picked.length >= MAX_PICK}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
+              background: customInput.trim() && picked.length < MAX_PICK ? COLORS.tomato : 'rgba(26,22,18,0.10)',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              cursor: customInput.trim() && picked.length < MAX_PICK ? 'pointer' : 'default',
+              transition: 'background 200ms ease',
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5v14M5 12h14" stroke={customInput.trim() && picked.length < MAX_PICK ? COLORS.cream : 'rgba(26,22,18,0.35)'} strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </button>
         </div>
       </div>
 

@@ -23,7 +23,7 @@ export function OnbGender() {
     } catch {
       // ignore
     }
-    setTimeout(() => navigate('/onboarding/done'), 220)
+    setTimeout(() => navigate('/onboarding/quiz1'), 220)
   }
 
   const root: CSSProperties = {
@@ -107,7 +107,7 @@ export function OnbGender() {
             aria-label="Назад"
             onClick={() => {
               haptic('light')
-              navigate('/onboarding/qualities')
+              navigate('/onboarding/3')
             }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
