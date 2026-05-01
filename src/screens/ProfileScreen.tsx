@@ -94,10 +94,34 @@ function formatNextEvent(booking: { meetup: { date_label: string; place: string;
   }
 }
 
+const ALL_CANDIDATES: Array<Pick<VibeTag, 't' | 'kind'>> = [
+  { t: 'кофе с молоком',            kind: 'cream'  },
+  { t: 'пешком по городу',          kind: 'forest' },
+  { t: 'без громкой музыки',        kind: 'ink'    },
+  { t: 'книги > сериалы',           kind: 'tomato' },
+  { t: 'свет > тёмные комнаты',     kind: 'honey'  },
+  { t: 'чай, не кофе',              kind: 'honey'  },
+  { t: 'суббота, не воскресенье',   kind: 'cream'  },
+  { t: 'природа > город',           kind: 'forest' },
+  { t: 'тихие разговоры',           kind: 'ink'    },
+  { t: 'смеяться до слёз',          kind: 'tomato' },
+  { t: 'уютные места',              kind: 'honey'  },
+  { t: 'вдумчиво > быстро',         kind: 'cream'  },
+  { t: 'ранний ужин',               kind: 'forest' },
+  { t: 'без телефона за столом',     kind: 'ink'    },
+  { t: 'хорошее вино',              kind: 'tomato' },
+  { t: 'маленькие компании',        kind: 'cream'  },
+  { t: 'честность > вежливость',    kind: 'tomato' },
+  { t: 'искусство в быту',          kind: 'honey'  },
+  { t: 'долгие прогулки',           kind: 'forest' },
+  { t: 'разговоры за полночь',      kind: 'ink'    },
+]
+
 export function ProfileScreen() {
   const { user } = useUser()
   const [tags, setTags] = useState<VibeTag[]>(VIBE_TAGS)
   const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [showPicker, setShowPicker] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -128,29 +152,25 @@ export function ProfileScreen() {
     ))
   }
 
-  function addVibe() {
+  function openPicker() {
     haptic('light')
-    const candidates: Array<Pick<VibeTag, 't' | 'kind'>> = [
-      { t: 'кофе с молоком', kind: 'cream' },
-      { t: 'пешком по городу', kind: 'forest' },
-      { t: 'без громкой музыки', kind: 'ink' },
-      { t: 'книги > сериалы', kind: 'tomato' },
-      { t: 'свет > тёмные комнаты', kind: 'honey' },
-    ]
-    const used = new Set(tags.map((t) => t.t))
-    const next = candidates.find((c) => !used.has(c.t))
-    if (!next) return
+    setShowPicker(true)
+  }
+
+  function pickVibe(candidate: Pick<VibeTag, 't' | 'kind'>) {
+    haptic('light')
     const sizes = [14, 17, 20, 22]
     const rotations = [-4, -2, 1, 3, -1]
     setTags((prev) => [
       ...prev,
       {
-        t: next.t,
-        kind: next.kind,
-        size: sizes[tags.length % sizes.length] ?? 17,
-        rot: rotations[tags.length % rotations.length] ?? 0,
+        t: candidate.t,
+        kind: candidate.kind,
+        size: sizes[prev.length % sizes.length] ?? 17,
+        rot: rotations[prev.length % rotations.length] ?? 0,
       },
     ])
+    setShowPicker(false)
   }
 
   const displayName = user?.name ?? 'гость'
@@ -373,7 +393,7 @@ export function ProfileScreen() {
               )
             })}
             <button
-              onClick={addVibe}
+              onClick={openPicker}
               style={{
                 padding: '9px 14px',
                 borderRadius: 14,
@@ -438,6 +458,72 @@ export function ProfileScreen() {
       </div>
 
       <TabBar active="me" />
+
+      {/* Vibe picker bottom sheet */}
+      {showPicker && (
+        <>
+          <div
+            onClick={() => setShowPicker(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 50,
+              background: 'rgba(26,22,18,0.45)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
+            }}
+          />
+          <div style={{
+            position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 51,
+            background: COLORS.cream,
+            borderRadius: '24px 24px 0 0',
+            padding: '20px 22px calc(env(safe-area-inset-bottom,0px) + 24px)',
+            boxShadow: '0 -8px 40px rgba(26,22,18,0.18)',
+            maxHeight: '72dvh',
+            overflowY: 'auto',
+            animation: 'sheetUp 280ms cubic-bezier(0.22,1,0.36,1) both',
+          }}>
+            <style>{`@keyframes sheetUp { from{transform:translateY(100%)} to{transform:translateY(0)} }`}</style>
+            {/* Handle */}
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(26,22,18,0.15)', margin: '0 auto 20px' }} />
+            <div style={{ ...serifStyle, fontSize: 24, color: COLORS.ink, marginBottom: 16 }}>
+              выберите вайб
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 10px' }}>
+              {ALL_CANDIDATES.filter(c => !tags.some(t => t.t === c.t)).map((c) => {
+                const p = palette(c.kind)
+                return (
+                  <button
+                    key={c.t}
+                    onClick={() => pickVibe(c)}
+                    style={{
+                      background: p.bg,
+                      color: p.c,
+                      border: p.br || '1.5px solid transparent',
+                      padding: '10px 16px',
+                      borderRadius: 14,
+                      ...sansStyle,
+                      fontStyle: 'italic',
+                      fontWeight: 600,
+                      fontSize: 16,
+                      letterSpacing: '-0.01em',
+                      boxShadow: p.shadow,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      transition: 'transform 180ms ease',
+                    }}
+                  >
+                    {c.t}
+                  </button>
+                )
+              })}
+              {ALL_CANDIDATES.filter(c => !tags.some(t => t.t === c.t)).length === 0 && (
+                <div style={{ ...sansStyle, fontSize: 14, color: COLORS.inkSoft }}>
+                  все вайбы уже добавлены
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
     </PageTransition>
   )
