@@ -74,6 +74,9 @@ const OPTIONS: OptionDef[] = [
   },
 ]
 
+const QUIZ_STEP = 3
+const QUIZ_TOTAL = 4
+
 export function Quiz5() {
   const navigate = useNavigate()
   const [picked, setPicked] = useState<string>('weekly')
@@ -93,24 +96,6 @@ export function Quiz5() {
     padding: '78px 22px 28px',
     display: 'flex',
     flexDirection: 'column',
-  }
-  const progressWrap: CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  }
-  const dotsWrap: CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-  }
-  const stepLabel: CSSProperties = {
-    ...sansStyle,
-    fontSize: 12,
-    color: COLORS.inkSoft,
-    letterSpacing: '0.04em',
-    textTransform: 'uppercase',
   }
   const heading: CSSProperties = {
     fontSize: 38,
@@ -211,37 +196,13 @@ export function Quiz5() {
     <div style={root}>
       <Grain opacity={0.5} />
       <div style={content}>
-        <div style={progressWrap}>
-          <span style={dotsWrap}>
-            {[0, 1, 2].map((i) => (
-              <span
-                key={i}
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  background: COLORS.tomato,
-                }}
-              />
-            ))}
-            <span
-              style={{
-                width: 22,
-                height: 8,
-                borderRadius: 4,
-                background: COLORS.tomato,
-              }}
-            />
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: 4,
-                background: 'rgba(26,22,18,0.2)',
-              }}
-            />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+          <div style={{ flex: 1, height: 3, background: 'rgba(26,22,18,0.10)', borderRadius: 2, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${(QUIZ_STEP / QUIZ_TOTAL) * 100}%`, background: COLORS.tomato, transition: 'width 400ms ease' }} />
+          </div>
+          <span style={{ ...sansStyle, fontSize: 11, color: COLORS.inkSoft, letterSpacing: '0.06em', textTransform: 'uppercase' as const, flexShrink: 0 }}>
+            {QUIZ_STEP} / {QUIZ_TOTAL}
           </span>
-          <span style={stepLabel}>4 из 5</span>
         </div>
 
         <h2 style={heading}>

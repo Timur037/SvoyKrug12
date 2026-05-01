@@ -111,8 +111,8 @@ const OPTIONS: OptionDef[] = [
   },
 ]
 
-const TOTAL_STEPS = 5
-const CURRENT_STEP = 1
+const QUIZ_STEP = 1
+const QUIZ_TOTAL = 4
 
 export function Quiz1() {
   const navigate = useNavigate()
@@ -145,28 +145,6 @@ export function Quiz1() {
     padding: '60px 20px 24px',
     display: 'flex',
     flexDirection: 'column',
-  }
-
-  // ── progress ─────────────────────────────────────────────
-  const progressWrap: CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 26,
-  }
-  const segmentsRow: CSSProperties = {
-    display: 'flex',
-    flex: 1,
-    gap: 4,
-    alignItems: 'center',
-  }
-  const stepLabel: CSSProperties = {
-    ...sansStyle,
-    fontSize: 11,
-    color: COLORS.inkSoft,
-    letterSpacing: '0.07em',
-    textTransform: 'uppercase',
-    flexShrink: 0,
   }
 
   // ── heading ───────────────────────────────────────────────
@@ -319,22 +297,13 @@ export function Quiz1() {
       <div style={content}>
 
         {/* ── Progress ── */}
-        <div style={progressWrap}>
-          <div style={segmentsRow}>
-            {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-              <span
-                key={i}
-                style={{
-                  height: 3,
-                  flex: 1,
-                  borderRadius: 2,
-                  background: i < CURRENT_STEP ? COLORS.tomato : 'rgba(26,22,18,0.13)',
-                  transition: 'background 300ms ease',
-                }}
-              />
-            ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+          <div style={{ flex: 1, height: 3, background: 'rgba(26,22,18,0.10)', borderRadius: 2, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${(QUIZ_STEP / QUIZ_TOTAL) * 100}%`, background: COLORS.tomato, transition: 'width 400ms ease' }} />
           </div>
-          <span style={stepLabel}>{CURRENT_STEP} / {TOTAL_STEPS}</span>
+          <span style={{ ...sansStyle, fontSize: 11, color: COLORS.inkSoft, letterSpacing: '0.06em', textTransform: 'uppercase' as const, flexShrink: 0 }}>
+            {QUIZ_STEP} / {QUIZ_TOTAL}
+          </span>
         </div>
 
         {/* ── Heading ── */}
