@@ -333,7 +333,7 @@ export function Onb3() {
               style={{
                 position: 'absolute',
                 left: seat.cx - 28,
-                top: seat.cy + 27,
+                top: seat.cy < TABLE_CENTER ? seat.cy - 37 : seat.cy + 27,
                 width: 56,
                 textAlign: 'center',
                 ...sansStyle,
