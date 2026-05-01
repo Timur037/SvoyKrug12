@@ -7,7 +7,7 @@ import { haptic } from '../../lib/telegram'
 
 const OPTIONS = ['мужчина', 'женщина', 'другое'] as const
 
-const STEP = 3
+const STEP = 1
 const TOTAL = 4
 
 export function OnbGender() {

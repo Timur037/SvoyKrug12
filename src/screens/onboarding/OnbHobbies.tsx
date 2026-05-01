@@ -27,7 +27,7 @@ const HOBBIES: { emoji: string; label: string }[] = [
 ]
 
 const MAX_PICK = 10
-const STEP = 1
+const STEP = 2
 const TOTAL = 4
 
 export function OnbHobbies() {
