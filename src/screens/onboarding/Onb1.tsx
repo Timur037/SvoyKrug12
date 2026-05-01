@@ -85,7 +85,6 @@ export function Onb1() {
           <span style={overline}>свой круг · 01</span>
           <div style={heroWrap}>
             <span style={{ ...heroLine, ...serifStyle }}>знакомиться</span>
-            <span style={{ ...heroLine, ...serifStyle }}>заново</span>
             <span
               style={{
                 ...heroLine,
