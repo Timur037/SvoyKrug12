@@ -6,14 +6,10 @@ import { haptic } from '../lib/telegram'
 import { useUser } from '../context/UserContext'
 import { fetchUserBookings, fetchMeetupParticipants, type DbMeetup, type DbParticipant } from '../lib/db'
 
-const DRIFT_KEYFRAMES = `
-  @keyframes drift0 { 0%{transform:translate(0,0)} 33%{transform:translate(8px,-6px)} 66%{transform:translate(-5px,9px)} 100%{transform:translate(0,0)} }
-  @keyframes drift1 { 0%{transform:translate(0,0)} 25%{transform:translate(-9px,4px)} 60%{transform:translate(7px,8px)} 100%{transform:translate(0,0)} }
-  @keyframes drift2 { 0%{transform:translate(0,0)} 40%{transform:translate(10px,7px)} 75%{transform:translate(-6px,-9px)} 100%{transform:translate(0,0)} }
-  @keyframes drift3 { 0%{transform:translate(0,0)} 30%{transform:translate(-7px,-8px)} 70%{transform:translate(9px,3px)} 100%{transform:translate(0,0)} }
-  @keyframes drift4 { 0%{transform:translate(0,0)} 50%{transform:translate(6px,10px)} 100%{transform:translate(0,0)} }
-  @keyframes anchorDrift { 0%{transform:translate(0,0)} 50%{transform:translate(-3px,-4px)} 100%{transform:translate(0,0)} }
-`
+const TABLE_CONTAINER = 350
+const TABLE_CENTER = TABLE_CONTAINER / 2
+const SEAT_RADIUS = 148
+const TABLE_RADIUS = 88
 
 const DOT_COLORS: Array<{ bg: string; fg: string; border: boolean }> = [
   { bg: COLORS.cream2,  fg: COLORS.ink,   border: false },
@@ -66,14 +62,6 @@ export function GroupScreen() {
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    if (document.getElementById('circle-drift-kf')) return
-    const s = document.createElement('style')
-    s.id = 'circle-drift-kf'
-    s.textContent = DRIFT_KEYFRAMES
-    document.head.appendChild(s)
-  }, [])
-
-  useEffect(() => {
     if (!user) return
     fetchUserBookings(user.id)
       .then((bookings) => {
@@ -95,10 +83,6 @@ export function GroupScreen() {
         setLoaded(true)
       })
   }, [user])
-
-  const cx = (typeof window !== 'undefined' ? window.innerWidth : 360) / 2 - 22
-  const cy = 200
-  const R = 120
 
   const root: CSSProperties = {
     position: 'relative',
@@ -128,8 +112,6 @@ export function GroupScreen() {
     backdropFilter: 'blur(8px)',
     WebkitBackdropFilter: 'blur(8px)',
   }
-
-  const driftDurations = [9, 10.5, 12, 13.5, 11, 14]
 
   // No booking — empty state
   if (loaded && !meetup) {
@@ -210,11 +192,56 @@ export function GroupScreen() {
     })),
   ]
 
+  type Seat = {
+    id: string
+    initials: string
+    label: string
+    bg: string
+    fg: string
+    border: boolean
+    ghost: boolean
+  }
+
+  const youSeat: Seat = {
+    id: 'you',
+    initials: 'ВЫ',
+    label: user?.name ?? 'Вы',
+    bg: COLORS.tomato,
+    fg: COLORS.cream,
+    border: false,
+    ghost: false,
+  }
+
+  const allSeats: Seat[] = [
+    youSeat,
+    ...surroundingDots.map((p) => ({
+      id: p.id,
+      initials: p.initials,
+      label: p.label,
+      bg: p.color,
+      fg: p.textColor,
+      border: p.border,
+      ghost: p.ghost,
+    })),
+  ].slice(0, 6)
+
+  // Pad to exactly 6 if needed
+  while (allSeats.length < 6) {
+    allSeats.push({
+      id: `ghost-pad-${allSeats.length}`,
+      initials: '?',
+      label: 'ждём',
+      bg: 'rgba(245,239,230,0.06)',
+      fg: 'rgba(245,239,230,0.25)',
+      border: true,
+      ghost: true,
+    })
+  }
+
   const dayLabel = getWeekdayRu(meetup?.scheduled_at ?? null)
   const timeLabel = getMeetupTime(meetup?.scheduled_at ?? null)
   const revealTime = getRevealTime(meetup?.scheduled_at ?? null)
   const countdown = getCountdown(meetup?.scheduled_at ?? null)
-  const totalLabel = `${totalSeats}`
 
   return (
     <div style={root}>
@@ -246,54 +273,121 @@ export function GroupScreen() {
         </h1>
       </div>
 
-      {/* Dots stage */}
+      {/* Table stage */}
       <div style={{ flex: 1, position: 'relative' }}>
-        {/* Ghost number */}
+        {/* Warm radial glow */}
         <div style={{
           position: 'absolute',
-          left: '50%',
-          top: '50%',
-          transform: 'translate(-50%, -50%)',
-          ...serifStyle,
-          fontSize: 340,
-          lineHeight: 1,
-          color: 'rgba(232,71,44,0.10)',
-          letterSpacing: '-0.04em',
-          userSelect: 'none',
-          zIndex: 1,
+          inset: 0,
+          background: 'radial-gradient(ellipse 70% 55% at 50% 50%, rgba(50,35,18,0.8) 0%, transparent 70%)',
           pointerEvents: 'none',
+        }} />
+
+        {/* Table container — exact center */}
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: TABLE_CONTAINER,
+          height: TABLE_CONTAINER,
         }}>
-          {totalLabel}
+          {/* SVG connection lines */}
+          <svg
+            style={{ position: 'absolute', inset: 0, width: TABLE_CONTAINER, height: TABLE_CONTAINER }}
+            viewBox={`0 0 ${TABLE_CONTAINER} ${TABLE_CONTAINER}`}
+          >
+            {allSeats.map((_, i) => {
+              const angle = ((i * 60 - 90) * Math.PI) / 180
+              const x1 = TABLE_CENTER + TABLE_RADIUS * Math.cos(angle)
+              const y1 = TABLE_CENTER + TABLE_RADIUS * Math.sin(angle)
+              const x2 = TABLE_CENTER + SEAT_RADIUS * Math.cos(angle)
+              const y2 = TABLE_CENTER + SEAT_RADIUS * Math.sin(angle)
+              return (
+                <line key={i} x1={x1} y1={y1} x2={x2} y2={y2}
+                  stroke="rgba(245,239,230,0.07)" strokeWidth="1" strokeDasharray="3 4" />
+              )
+            })}
+          </svg>
+
+          {/* Center table circle */}
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%,-50%)',
+            width: TABLE_RADIUS * 2,
+            height: TABLE_RADIUS * 2,
+            borderRadius: '50%',
+            background: 'linear-gradient(145deg, #2A1E12 0%, #1A1208 100%)',
+            border: '1.5px solid rgba(244,201,93,0.30)',
+            boxShadow: '0 0 50px rgba(244,201,93,0.18), 0 0 100px rgba(244,201,93,0.07), inset 0 1px 0 rgba(244,201,93,0.12)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <span style={{
+              ...serifStyle,
+              fontSize: 64,
+              lineHeight: 1,
+              color: 'rgba(244,201,93,0.85)',
+              textShadow: '0 0 30px rgba(244,201,93,0.40)',
+            }}>
+              {totalSeats}
+            </span>
+          </div>
+
+          {/* 6 seat avatars */}
+          {allSeats.map((seat, i) => {
+            const angle = ((i * 60 - 90) * Math.PI) / 180
+            const cx = TABLE_CENTER + SEAT_RADIUS * Math.cos(angle)
+            const cy = TABLE_CENTER + SEAT_RADIUS * Math.sin(angle)
+            const SEAT_SIZE = 46
+            return (
+              <div key={seat.id}>
+                <div style={{
+                  position: 'absolute',
+                  left: cx - SEAT_SIZE / 2,
+                  top: cy - SEAT_SIZE / 2,
+                  width: SEAT_SIZE,
+                  height: SEAT_SIZE,
+                  borderRadius: '50%',
+                  background: seat.bg,
+                  border: seat.border ? '1.5px solid rgba(245,239,230,0.18)' : 'none',
+                  boxShadow: seat.ghost ? 'none' : '0 4px 16px rgba(0,0,0,0.40)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  opacity: seat.ghost ? 0.55 : 1,
+                }}>
+                  <span style={{
+                    ...sansStyle,
+                    fontSize: seat.initials === 'ВЫ' ? 11 : 15,
+                    fontWeight: 700,
+                    color: seat.fg,
+                  }}>
+                    {seat.initials}
+                  </span>
+                </div>
+                {/* Name label */}
+                <span style={{
+                  position: 'absolute',
+                  left: cx - 30,
+                  top: cy + SEAT_SIZE / 2 + 6,
+                  width: 60,
+                  textAlign: 'center',
+                  ...sansStyle,
+                  fontSize: 10,
+                  fontWeight: 500,
+                  color: seat.ghost ? 'rgba(245,239,230,0.30)' : 'rgba(245,239,230,0.65)',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {seat.label}
+                </span>
+              </div>
+            )
+          })}
         </div>
-
-        {/* You — anchor dot */}
-        <DriftDot
-          x={cx} y={cy} size={56}
-          color={COLORS.tomato} textColor={COLORS.cream}
-          label="вы" initials="ВЫ" bold
-          anim={`anchorDrift ${driftDurations[5]}s cubic-bezier(0.4,0,0.6,1) infinite`}
-        />
-
-        {/* Others + ghost slots */}
-        {surroundingDots.map((p, i) => {
-          const count = Math.max(surroundingDots.length, 5)
-          const angle = (i / count) * Math.PI * 2 - Math.PI / 2
-          const x = cx + Math.cos(angle) * R
-          const y = cy + Math.sin(angle) * R
-          const dur = driftDurations[i] ?? 10
-          return (
-            <DriftDot
-              key={p.id}
-              x={x} y={y} size={p.ghost ? 32 : 36}
-              color={p.color} textColor={p.textColor}
-              label={p.label}
-              initials={p.initials}
-              border={p.border}
-              ghost={p.ghost}
-              anim={p.ghost ? 'none' : `drift${i % 5} ${dur}s cubic-bezier(0.4,0,0.6,1) infinite`}
-            />
-          )
-        })}
       </div>
 
       {/* Footer */}
@@ -346,71 +440,6 @@ export function GroupScreen() {
           обратный отсчёт →
         </button>
       </div>
-    </div>
-  )
-}
-
-interface DriftDotProps {
-  x: number
-  y: number
-  size: number
-  color: string
-  textColor: string
-  label: string
-  initials?: string
-  bold?: boolean
-  border?: boolean
-  ghost?: boolean
-  anim: string
-}
-
-function DriftDot({
-  x, y, size, color, textColor, label, initials, bold, border, ghost, anim,
-}: DriftDotProps) {
-  return (
-    <div style={{
-      position: 'absolute',
-      left: x,
-      top: y,
-      transform: 'translate(-50%, -50%)',
-      animation: anim,
-      willChange: 'transform',
-      zIndex: 5,
-      opacity: ghost ? 0.5 : 1,
-    }}>
-      <div style={{
-        width: size,
-        height: size,
-        borderRadius: 99,
-        background: color,
-        border: border ? '1.5px solid rgba(245,239,230,0.4)' : 'none',
-        boxShadow: ghost ? 'none' : '0 4px 14px rgba(0,0,0,0.25)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: textColor,
-        ...sansStyle,
-        fontSize: bold ? 12 : 10,
-        fontWeight: bold ? 700 : 600,
-        letterSpacing: bold ? '-0.01em' : 'normal',
-      }}>
-        {initials ?? ''}
-      </div>
-      {!bold && (
-        <div style={{
-          position: 'absolute',
-          top: size + 6,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          ...sansStyle,
-          fontSize: 10,
-          color: ghost ? 'rgba(245,239,230,0.35)' : 'rgba(245,239,230,0.75)',
-          whiteSpace: 'nowrap',
-          fontWeight: 500,
-        }}>
-          {label}
-        </div>
-      )}
     </div>
   )
 }
