@@ -186,7 +186,6 @@ const VIBE_GROUPS: VibeGroup[] = [
   },
 ]
 
-const ALL_CANDIDATES = VIBE_GROUPS.flatMap((g) => g.items)
 
 export function ProfileScreen() {
   const { user } = useUser()
