@@ -39,7 +39,7 @@ function isOnboarded() {
 }
 
 function RootRedirect() {
-  return <Navigate to={isOnboarded() ? '/home' : '/onboarding/1'} replace />
+  return <Navigate to="/onboarding/1" replace />
 }
 
 function PostHogPageView() {
