@@ -3,19 +3,41 @@ import { useNavigate } from 'react-router-dom'
 import { COLORS, serifStyle, sansStyle } from '../../theme'
 import { Grain } from '../../components/Grain'
 import { haptic } from '../../lib/telegram'
+import { upsertUser, saveProfile } from '../../lib/user'
 
 const STEP = 7
 const TOTAL = 7
 
+function readLS<T>(key: string, fallback: T): T {
+  try {
+    const v = localStorage.getItem(key)
+    if (!v) return fallback
+    return JSON.parse(v) as T
+  } catch {
+    return fallback
+  }
+}
+
 export function OnbDone() {
   const navigate = useNavigate()
 
-  function finish() {
+  async function finish() {
     haptic('medium')
     try {
       localStorage.setItem('svoy_krug_onboarded', '1')
-    } catch {
-      // ignore
+
+      const gender   = localStorage.getItem('svoy_krug_gender') ?? undefined
+      const ageRaw   = localStorage.getItem('svoy_krug_age')
+      const age      = ageRaw ? parseInt(ageRaw, 10) : undefined
+      const work     = localStorage.getItem('svoy_krug_work') ?? undefined
+      const district = localStorage.getItem('svoy_krug_district') ?? undefined
+      const hobbies  = readLS<string[]>('svoy_krug_hobbies', [])
+      const qualities = readLS<string[]>('svoy_krug_qualities', [])
+
+      const user = await upsertUser()
+      await saveProfile(user.id, { gender, age, work, district, hobbies, qualities })
+    } catch (err) {
+      console.error('saveProfile error:', err)
     }
     navigate('/home', { replace: true })
   }

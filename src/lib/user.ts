@@ -53,3 +53,27 @@ export async function upsertUser(): Promise<AppUser> {
     name: data.name,
   }
 }
+
+export interface UserProfile {
+  gender?: string
+  age?: number
+  work?: string
+  district?: string
+  hobbies?: string[]
+  qualities?: string[]
+  vibes?: string[]
+}
+
+export async function saveProfile(userId: string, profile: UserProfile): Promise<void> {
+  const update: Record<string, unknown> = {}
+  if (profile.gender   !== undefined) update.gender    = profile.gender
+  if (profile.age      !== undefined) update.age       = profile.age
+  if (profile.work     !== undefined) update.work      = profile.work
+  if (profile.district !== undefined) update.district  = profile.district
+  if (profile.hobbies  !== undefined) update.hobbies   = profile.hobbies
+  if (profile.qualities !== undefined) update.qualities = profile.qualities
+  if (profile.vibes    !== undefined) update.vibes     = profile.vibes
+
+  const { error } = await supabase.from('users').update(update).eq('id', userId)
+  if (error) throw error
+}
