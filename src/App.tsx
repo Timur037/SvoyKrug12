@@ -30,14 +30,6 @@ import { GroupChatScreen } from './screens/GroupChatScreen'
 import { UserProvider } from './context/UserContext'
 import { posthog } from './lib/posthog'
 
-function isOnboarded() {
-  try {
-    return localStorage.getItem('svoy_krug_onboarded') === '1'
-  } catch {
-    return false
-  }
-}
-
 function RootRedirect() {
   return <Navigate to="/onboarding/1" replace />
 }
