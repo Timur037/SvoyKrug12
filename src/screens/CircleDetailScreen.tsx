@@ -28,6 +28,7 @@ export function CircleDetailScreen() {
   const [bookingId, setBookingId] = useState<string | null>(null)
   const [booking, setBooking] = useState(false)
   const [toast, setToast] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
 
   const circleId = (() => { try { return localStorage.getItem('svoy_krug_last_circle') } catch { return null } })()
@@ -56,8 +57,19 @@ export function CircleDetailScreen() {
   }, [user, upcomingMeetup])
 
   async function handleBook() {
-    if (!upcomingMeetup || booking || !user) return
+    if (!upcomingMeetup || booking) return
+    if (!user) {
+      setErrorMsg('не удалось создать профиль — попробуй перезагрузить страницу')
+      return
+    }
+    // Mock meetup IDs are not real UUIDs — can't save to Supabase
+    const isMockMeetup = upcomingMeetup.id.startsWith('mock-')
+    if (isMockMeetup) {
+      setErrorMsg('это демо-вечер, запись недоступна. Скоро добавим реальные вечера!')
+      return
+    }
     haptic('medium')
+    setErrorMsg(null)
     setBooking(true)
     try {
       if (bookingId) {
@@ -71,7 +83,10 @@ export function CircleDetailScreen() {
         setToast(true)
         setTimeout(() => { setToast(false); navigate('/waiting') }, 1800)
       }
-    } catch (err) { console.error(err) }
+    } catch (err) {
+      console.error('handleBook error:', err)
+      setErrorMsg('не удалось записаться — попробуй ещё раз')
+    }
     finally { setBooking(false) }
   }
 
@@ -305,8 +320,14 @@ export function CircleDetailScreen() {
           background: 'linear-gradient(180deg, transparent 0%, rgba(26,22,18,0.97) 28%)',
           backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
         }}>
+          {/* Error message */}
+          {errorMsg && (
+            <div style={{ ...sansStyle, fontSize: 12, color: COLORS.honey, textAlign: 'center', marginBottom: 10, lineHeight: 1.4 }}>
+              {errorMsg}
+            </div>
+          )}
           {/* Seats preview above button */}
-          {!bookingId && !full && (
+          {!bookingId && !full && !errorMsg && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 10 }}>
               <Seats taken={taken} total={total} dark />
               <span style={{ ...sansStyle, fontSize: 11, color: 'rgba(245,239,230,0.45)' }}>
