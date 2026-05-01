@@ -10,7 +10,7 @@ interface OptionDef {
   title: string
   hint: string
   vibe: string
-  icon: JSX.Element
+  icon: (isSelected: boolean) => JSX.Element
 }
 
 function GlassIcon({ color }: { color: string }) {
@@ -38,26 +38,82 @@ function BenchIcon({ color }: { color: string }) {
   )
 }
 
+function CupIcon({ color }: { color: string }) {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <path d="M7 10h14v8a5 5 0 0 1-5 5H12a5 5 0 0 1-5-5v-8Z" stroke={color} strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M21 12h2a2 2 0 0 1 0 4h-2" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M11 7c0-2 2-2 2-4M15 7c0-2 2-2 2-4" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function BrunchIcon({ color }: { color: string }) {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <circle cx="14" cy="15" r="7" stroke={color} strokeWidth="1.6" />
+      <path d="M7 15h14" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M10 9.5C10 8 11 6 14 6s4 2 4 3.5" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M11 24h6" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M14 22v2" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function DiceIcon({ color }: { color: string }) {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="4" y="4" width="20" height="20" rx="4" stroke={color} strokeWidth="1.6" />
+      <circle cx="9.5" cy="9.5" r="1.5" fill={color} />
+      <circle cx="18.5" cy="9.5" r="1.5" fill={color} />
+      <circle cx="14" cy="14" r="1.5" fill={color} />
+      <circle cx="9.5" cy="18.5" r="1.5" fill={color} />
+      <circle cx="18.5" cy="18.5" r="1.5" fill={color} />
+    </svg>
+  )
+}
+
 const OPTIONS: OptionDef[] = [
   {
-    id: 'wine',
+    id: 'dinner',
     title: 'долгий ужин',
     hint: 'разговоры до полуночи, бокал, медленно.',
     vibe: '— оживлённо, тепло.',
-    icon: <GlassIcon color={COLORS.cream} />,
+    icon: (s) => <GlassIcon color={s ? COLORS.cream : COLORS.ink} />,
   },
   {
     id: 'walk',
     title: 'прогулка в парке',
     hint: 'пешком, без шума, с глубокими темами.',
-    vibe: '',
-    icon: <BenchIcon color={COLORS.ink} />,
+    vibe: '— спокойно, неспешно.',
+    icon: (s) => <BenchIcon color={s ? COLORS.cream : COLORS.ink} />,
+  },
+  {
+    id: 'coffee',
+    title: 'утренний кофе',
+    hint: 'неспешно, за чашкой, пока город просыпается.',
+    vibe: '— тихо, светло.',
+    icon: (s) => <CupIcon color={s ? COLORS.cream : COLORS.ink} />,
+  },
+  {
+    id: 'brunch',
+    title: 'бранч',
+    hint: 'воскресенье, 11:00, никуда не торопиться.',
+    vibe: '— расслабленно, вкусно.',
+    icon: (s) => <BrunchIcon color={s ? COLORS.cream : COLORS.ink} />,
+  },
+  {
+    id: 'games',
+    title: 'настолки',
+    hint: 'игра снимает неловкость — разговор начинается сам.',
+    vibe: '— весело, живо.',
+    icon: (s) => <DiceIcon color={s ? COLORS.cream : COLORS.ink} />,
   },
 ]
 
 export function Quiz1() {
   const navigate = useNavigate()
-  const [picked, setPicked] = useState<string>('wine')
+  const [picked, setPicked] = useState<string>('dinner')
 
   const root: CSSProperties = {
     position: 'relative',
@@ -102,8 +158,11 @@ export function Quiz1() {
   const optList: CSSProperties = {
     display: 'flex',
     flexDirection: 'column',
-    gap: 12,
+    gap: 10,
     flex: 1,
+    overflowY: 'auto',
+    scrollbarWidth: 'none',
+    paddingBottom: 4,
   }
   const cardBase = (isSelected: boolean): CSSProperties => ({
     position: 'relative',
@@ -233,7 +292,7 @@ export function Quiz1() {
                 onClick={() => pick(opt.id)}
               >
                 <div style={cardRow}>
-                  <div style={iconBubble(isSelected)}>{opt.icon}</div>
+                  <div style={iconBubble(isSelected)}>{opt.icon(isSelected)}</div>
                   <div style={{ flex: 1 }}>
                     <h3 style={cardTitle}>{opt.title}</h3>
                     <p style={cardHint(isSelected)}>{opt.hint}</p>
