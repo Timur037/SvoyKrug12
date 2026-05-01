@@ -111,21 +111,14 @@ export async function bookMeetup(userId: string, meetupId: string): Promise<stri
     .select('id')
     .single()
   if (error) throw error
-  // Increment taken using read-then-write (race conditions acceptable for MVP)
-  const { data: m } = await supabase.from('meetups').select('taken').eq('id', meetupId).single()
-  if (m) {
-    await supabase.from('meetups').update({ taken: (m.taken ?? 0) + 1 }).eq('id', meetupId)
-  }
+  await supabase.rpc('increment_meetup_taken', { meetup_id: meetupId })
   return data.id
 }
 
 // Cancel a booking
 export async function cancelBooking(bookingId: string, meetupId: string): Promise<void> {
   await supabase.from('bookings').delete().eq('id', bookingId)
-  const { data: m } = await supabase.from('meetups').select('taken').eq('id', meetupId).single()
-  if (m && m.taken > 0) {
-    await supabase.from('meetups').update({ taken: m.taken - 1 }).eq('id', meetupId)
-  }
+  await supabase.rpc('decrement_meetup_taken', { meetup_id: meetupId })
 }
 
 // Fetch all bookings for a user (with meetup details)

@@ -34,6 +34,7 @@ export function CircleDetailScreen() {
 
   useEffect(() => {
     if (!circleId) { navigate(-1); return }
+    // Try Supabase first; fall back to mock for non-UUID ids
     if (circleId.startsWith('mock-')) {
       setCircle(MOCK_CIRCLES.find(c => c.id === circleId) ?? null)
       const m = MOCK_MEETUPS[circleId]
@@ -50,29 +51,13 @@ export function CircleDetailScreen() {
   const upcomingMeetup = meetups.find(m => m.status === 'upcoming') ?? null
 
   useEffect(() => {
-    if (!upcomingMeetup || circleId?.startsWith('mock-') || !user) return
+    if (!upcomingMeetup || !user) return
     fetchBooking(user.id, upcomingMeetup.id).then(setBookingId).catch(console.error)
-  }, [user, upcomingMeetup, circleId])
+  }, [user, upcomingMeetup])
 
   async function handleBook() {
-    if (!upcomingMeetup || booking) return
+    if (!upcomingMeetup || booking || !user) return
     haptic('medium')
-    if (circleId?.startsWith('mock-')) {
-      setBooking(true)
-      await new Promise(r => setTimeout(r, 600))
-      if (bookingId) {
-        setBookingId(null)
-        setMeetups(prev => prev.map(m => m.id === upcomingMeetup.id ? { ...m, taken: Math.max(0, m.taken - 1) } : m))
-      } else {
-        setBookingId('mock-booking')
-        setMeetups(prev => prev.map(m => m.id === upcomingMeetup.id ? { ...m, taken: m.taken + 1 } : m))
-        setToast(true)
-        setTimeout(() => { setToast(false); navigate('/waiting') }, 1800)
-      }
-      setBooking(false)
-      return
-    }
-    if (!user) return
     setBooking(true)
     try {
       if (bookingId) {

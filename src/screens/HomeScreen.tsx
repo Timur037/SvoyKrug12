@@ -41,20 +41,20 @@ function isToday(c: DbCircle): boolean {
 
 export function HomeScreen() {
   const [activeCategory, setActiveCategory] = useState<string>('all')
-  const [_circles, setCircles] = useState<DbCircle[]>([])
-  const [loaded, setLoaded] = useState<boolean>(true)
+  const [circles, setCircles] = useState<DbCircle[]>([])
+  const [loaded, setLoaded] = useState<boolean>(false)
   const navigate = useNavigate()
   const { user } = useUser()
 
   useEffect(() => {
     fetchCircles()
-      .then((data) => { setCircles(data); setLoaded(true) })
-      .catch((err) => { console.error(err); setLoaded(true) })
+      .then((data) => { setCircles(data.length > 0 ? data : MOCK_CIRCLES); setLoaded(true) })
+      .catch(() => { setCircles(MOCK_CIRCLES); setLoaded(true) })
   }, [])
 
   const displayCircles = activeCategory === 'all'
-    ? MOCK_CIRCLES
-    : MOCK_CIRCLES.filter((c) => c.kind === activeCategory)
+    ? circles
+    : circles.filter((c) => c.kind.includes(activeCategory))
 
   const greeting = getGreeting(user?.name ?? 'гость')
 
