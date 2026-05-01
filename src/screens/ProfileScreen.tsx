@@ -94,64 +94,99 @@ function formatNextEvent(booking: { meetup: { date_label: string; place: string;
   }
 }
 
-const ALL_CANDIDATES: Array<Pick<VibeTag, 't' | 'kind'>> = [
-  // время и ритм
-  { t: 'кофе с молоком',            kind: 'cream'  },
-  { t: 'чай, не кофе',              kind: 'honey'  },
-  { t: 'утро — лучшее время',       kind: 'honey'  },
-  { t: 'сова, не жаворонок',        kind: 'ink'    },
-  { t: 'суббота, не воскресенье',   kind: 'cream'  },
-  { t: 'ранний ужин',               kind: 'forest' },
-  { t: 'разговоры за полночь',      kind: 'ink'    },
-  { t: 'никуда не торопиться',      kind: 'cream'  },
-  { t: 'один раз — но хорошо',      kind: 'forest' },
-  // общение
-  { t: 'тихие разговоры',           kind: 'ink'    },
-  { t: 'смеяться до слёз',          kind: 'tomato' },
-  { t: 'честность > вежливость',    kind: 'tomato' },
-  { t: 'без светских разговоров',   kind: 'ink'    },
-  { t: 'слушаю больше, чем говорю', kind: 'forest' },
-  { t: 'без телефона за столом',    kind: 'ink'    },
-  { t: 'говорю прямо',              kind: 'tomato' },
-  { t: 'умею молчать',              kind: 'cream'  },
-  { t: 'глубина > светскость',      kind: 'forest' },
-  // еда и напитки
-  { t: 'хорошее вино',              kind: 'tomato' },
-  { t: 'десерт обязателен',         kind: 'honey'  },
-  { t: 'острое — да',               kind: 'tomato' },
-  { t: 'разделяю счёт',             kind: 'cream'  },
-  { t: 'завтрак — святое',          kind: 'honey'  },
-  { t: 'без фастфуда',              kind: 'forest' },
-  // места и пространство
-  { t: 'пешком по городу',          kind: 'forest' },
-  { t: 'уютные места',              kind: 'honey'  },
-  { t: 'природа > город',           kind: 'forest' },
-  { t: 'свет > тёмные комнаты',     kind: 'honey'  },
-  { t: 'маленькие компании',        kind: 'cream'  },
-  { t: 'не клубы',                  kind: 'ink'    },
-  { t: 'долгие прогулки',           kind: 'forest' },
-  { t: 'дома лучше',                kind: 'cream'  },
-  // интересы
-  { t: 'книги > сериалы',           kind: 'tomato' },
-  { t: 'кино на большом экране',    kind: 'ink'    },
-  { t: 'без громкой музыки',        kind: 'ink'    },
-  { t: 'искусство в быту',          kind: 'honey'  },
-  { t: 'музыка всегда',             kind: 'tomato' },
-  { t: 'читаю перед сном',          kind: 'cream'  },
-  // работа и деньги
-  { t: 'работа — не главное',       kind: 'forest' },
-  { t: 'делаю, что люблю',          kind: 'tomato' },
-  { t: 'деньги — инструмент',       kind: 'ink'    },
-  { t: 'в отпуск без ноутбука',     kind: 'honey'  },
-  // ценности
-  { t: 'дружба навсегда',           kind: 'tomato' },
-  { t: 'помогаю — значит живу',     kind: 'forest' },
-  { t: 'семья важнее всего',        kind: 'honey'  },
-  { t: 'свобода > стабильность',    kind: 'tomato' },
-  { t: 'развиваюсь каждый день',    kind: 'ink'    },
-  { t: 'верю в случайности',        kind: 'cream'  },
-  { t: 'люди важнее идей',          kind: 'forest' },
+interface VibeGroup {
+  label: string
+  items: Array<Pick<VibeTag, 't' | 'kind'>>
+}
+
+const VIBE_GROUPS: VibeGroup[] = [
+  {
+    label: 'время и ритм',
+    items: [
+      { t: 'кофе с молоком',            kind: 'cream'  },
+      { t: 'чай, не кофе',              kind: 'honey'  },
+      { t: 'утро — лучшее время',       kind: 'honey'  },
+      { t: 'сова, не жаворонок',        kind: 'ink'    },
+      { t: 'суббота, не воскресенье',   kind: 'cream'  },
+      { t: 'ранний ужин',               kind: 'forest' },
+      { t: 'разговоры за полночь',      kind: 'ink'    },
+      { t: 'никуда не торопиться',      kind: 'cream'  },
+      { t: 'один раз — но хорошо',      kind: 'forest' },
+    ],
+  },
+  {
+    label: 'общение',
+    items: [
+      { t: 'тихие разговоры',           kind: 'ink'    },
+      { t: 'смеяться до слёз',          kind: 'tomato' },
+      { t: 'честность > вежливость',    kind: 'tomato' },
+      { t: 'без светских разговоров',   kind: 'ink'    },
+      { t: 'слушаю больше, чем говорю', kind: 'forest' },
+      { t: 'без телефона за столом',    kind: 'ink'    },
+      { t: 'говорю прямо',              kind: 'tomato' },
+      { t: 'умею молчать',              kind: 'cream'  },
+      { t: 'глубина > светскость',      kind: 'forest' },
+    ],
+  },
+  {
+    label: 'еда и напитки',
+    items: [
+      { t: 'хорошее вино',              kind: 'tomato' },
+      { t: 'десерт обязателен',         kind: 'honey'  },
+      { t: 'острое — да',               kind: 'tomato' },
+      { t: 'разделяю счёт',             kind: 'cream'  },
+      { t: 'завтрак — святое',          kind: 'honey'  },
+      { t: 'без фастфуда',              kind: 'forest' },
+    ],
+  },
+  {
+    label: 'места',
+    items: [
+      { t: 'пешком по городу',          kind: 'forest' },
+      { t: 'уютные места',              kind: 'honey'  },
+      { t: 'природа > город',           kind: 'forest' },
+      { t: 'свет > тёмные комнаты',     kind: 'honey'  },
+      { t: 'маленькие компании',        kind: 'cream'  },
+      { t: 'не клубы',                  kind: 'ink'    },
+      { t: 'долгие прогулки',           kind: 'forest' },
+      { t: 'дома лучше',                kind: 'cream'  },
+    ],
+  },
+  {
+    label: 'интересы',
+    items: [
+      { t: 'книги > сериалы',           kind: 'tomato' },
+      { t: 'кино на большом экране',    kind: 'ink'    },
+      { t: 'без громкой музыки',        kind: 'ink'    },
+      { t: 'искусство в быту',          kind: 'honey'  },
+      { t: 'музыка всегда',             kind: 'tomato' },
+      { t: 'читаю перед сном',          kind: 'cream'  },
+    ],
+  },
+  {
+    label: 'работа и деньги',
+    items: [
+      { t: 'работа — не главное',       kind: 'forest' },
+      { t: 'делаю, что люблю',          kind: 'tomato' },
+      { t: 'деньги — инструмент',       kind: 'ink'    },
+      { t: 'в отпуск без ноутбука',     kind: 'honey'  },
+    ],
+  },
+  {
+    label: 'ценности',
+    items: [
+      { t: 'дружба навсегда',           kind: 'tomato' },
+      { t: 'помогаю — значит живу',     kind: 'forest' },
+      { t: 'семья важнее всего',        kind: 'honey'  },
+      { t: 'свобода > стабильность',    kind: 'tomato' },
+      { t: 'развиваюсь каждый день',    kind: 'ink'    },
+      { t: 'верю в случайности',        kind: 'cream'  },
+      { t: 'люди важнее идей',          kind: 'forest' },
+    ],
+  },
 ]
+
+const ALL_CANDIDATES = VIBE_GROUPS.flatMap((g) => g.items)
 
 export function ProfileScreen() {
   const { user } = useUser()
@@ -523,40 +558,54 @@ export function ProfileScreen() {
             <div style={{ ...serifStyle, fontSize: 24, color: COLORS.ink, marginBottom: 16 }}>
               выберите вайб
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 10px' }}>
-              {ALL_CANDIDATES.filter(c => !tags.some(t => t.t === c.t)).map((c) => {
-                const p = palette(c.kind)
-                return (
-                  <button
-                    key={c.t}
-                    onClick={() => pickVibe(c)}
-                    style={{
-                      background: p.bg,
-                      color: p.c,
-                      border: p.br || '1.5px solid transparent',
-                      padding: '10px 16px',
-                      borderRadius: 14,
-                      ...sansStyle,
-                      fontStyle: 'italic',
-                      fontWeight: 600,
-                      fontSize: 16,
-                      letterSpacing: '-0.01em',
-                      boxShadow: p.shadow,
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      transition: 'transform 180ms ease',
-                    }}
-                  >
-                    {c.t}
-                  </button>
-                )
-              })}
-              {ALL_CANDIDATES.filter(c => !tags.some(t => t.t === c.t)).length === 0 && (
-                <div style={{ ...sansStyle, fontSize: 14, color: COLORS.inkSoft }}>
-                  все вайбы уже добавлены
+            {VIBE_GROUPS.map((group) => {
+              const available = group.items.filter(c => !tags.some(t => t.t === c.t))
+              if (available.length === 0) return null
+              return (
+                <div key={group.label} style={{ marginBottom: 20 }}>
+                  <div style={{
+                    ...sansStyle,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: '0.14em',
+                    textTransform: 'uppercase',
+                    color: COLORS.inkSoft,
+                    marginBottom: 10,
+                  }}>
+                    {group.label}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 8px' }}>
+                    {available.map((c) => {
+                      const p = palette(c.kind)
+                      return (
+                        <button
+                          key={c.t}
+                          onClick={() => pickVibe(c)}
+                          style={{
+                            background: p.bg,
+                            color: p.c,
+                            border: p.br || '1.5px solid transparent',
+                            padding: '9px 14px',
+                            borderRadius: 14,
+                            ...sansStyle,
+                            fontStyle: 'italic',
+                            fontWeight: 600,
+                            fontSize: 15,
+                            letterSpacing: '-0.01em',
+                            boxShadow: p.shadow,
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            transition: 'transform 180ms ease',
+                          }}
+                        >
+                          {c.t}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
-              )}
-            </div>
+              )
+            })}
           </div>
         </>
       )}
