@@ -245,7 +245,7 @@ export function Quiz1() {
 
   function next() {
     haptic('light')
-    navigate('/onboarding/quiz3')
+    navigate('/onboarding/quiz4')
   }
 
   return (

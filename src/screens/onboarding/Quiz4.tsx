@@ -190,7 +190,7 @@ export function Quiz4() {
 
   function back() {
     haptic('light')
-    navigate('/onboarding/quiz3')
+    navigate('/onboarding/quiz1')
   }
 
   return (
