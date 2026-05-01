@@ -1,14 +1,10 @@
 import { useState } from 'react'
-import type { CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { COLORS, serifStyle, sansStyle } from '../../theme'
-import { Grain } from '../../components/Grain'
+import { COLORS, RADII, SHADOWS, serifStyle, sansStyle } from '../../theme'
+import { OnbShell } from '../../components/OnbShell'
 import { haptic } from '../../lib/telegram'
 
-const STEP = 3
-const TOTAL = 7
-
-const INDUSTRIES: { emoji: string; label: string }[] = [
+const INDUSTRIES = [
   { emoji: '💻', label: 'технологии / IT' },
   { emoji: '💰', label: 'финансы и банки' },
   { emoji: '🏥', label: 'медицина' },
@@ -29,158 +25,64 @@ export function OnbWork() {
 
   function pick(val: string) {
     if (picked) return
-    haptic('light')
+    haptic('medium')
     setPicked(val)
-    try {
-      localStorage.setItem('svoy_krug_work', val)
-    } catch {
-      // ignore
-    }
-    setTimeout(() => navigate('/onboarding/district'), 220)
-  }
-
-  const root: CSSProperties = {
-    position: 'relative',
-    background: COLORS.cream,
-    color: COLORS.ink,
-    minHeight: '100dvh',
-    display: 'flex',
-    flexDirection: 'column',
-  }
-  const header: CSSProperties = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-    paddingTop: 'env(safe-area-inset-top, 0px)',
-    background: 'rgba(245,239,230,0.96)',
-    backdropFilter: 'blur(10px)',
-    WebkitBackdropFilter: 'blur(10px)',
-  }
-  const headerInner: CSSProperties = {
-    position: 'relative',
-    height: 56,
-    display: 'flex',
-    alignItems: 'center',
-    padding: '0 16px',
-  }
-  const backBtn: CSSProperties = {
-    width: 40,
-    height: 40,
-    borderRadius: '50%',
-    background: 'rgba(26,22,18,0.06)',
-    border: '1px solid rgba(26,22,18,0.08)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: COLORS.ink,
-  }
-  const progressTrack: CSSProperties = {
-    height: 3,
-    width: '100%',
-    background: 'rgba(26,22,18,0.10)',
-    overflow: 'hidden',
-  }
-  const progressFill: CSSProperties = {
-    height: '100%',
-    width: `${(STEP / TOTAL) * 100}%`,
-    background: COLORS.tomato,
-    transition: 'width 400ms ease',
-  }
-  const content: CSSProperties = {
-    position: 'relative',
-    zIndex: 2,
-    flex: 1,
-    padding: '100px 22px 32px',
-    overflowY: 'auto',
-  }
-  const title: CSSProperties = {
-    ...serifStyle,
-    fontSize: 36,
-    lineHeight: 1.05,
-    margin: 0,
-    marginBottom: 8,
-    color: COLORS.ink,
-  }
-  const sub: CSSProperties = {
-    ...sansStyle,
-    fontSize: 14,
-    color: COLORS.inkSoft,
-    margin: 0,
-  }
-  const optionsWrap: CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 10,
-    marginTop: 24,
+    try { localStorage.setItem('svoy_krug_work', val) } catch { /* ignore */ }
+    setTimeout(() => navigate('/onboarding/district'), 240)
   }
 
   return (
-    <div style={root}>
-      <Grain opacity={0.3} />
+    <OnbShell step={3} total={7} backTo="/onboarding/age">
+      <div style={{ padding: '32px 22px 40px', flex: 1, overflowY: 'auto', scrollbarWidth: 'none' }}>
+        <h1 style={{ margin: '0 0 8px', ...serifStyle, fontSize: 40, lineHeight: 1.0, color: COLORS.ink }}>
+          чем занимаетесь?
+        </h1>
+        <p style={{ ...sansStyle, fontSize: 14, color: COLORS.inkSoft, margin: '0 0 28px' }}>выберите одно</p>
 
-      <div style={header}>
-        <div style={headerInner}>
-          <button
-            style={backBtn}
-            aria-label="Назад"
-            onClick={() => {
-              haptic('light')
-              navigate('/onboarding/age')
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M15 6l-6 6 6 6"
-                stroke={COLORS.ink}
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        </div>
-        <div style={progressTrack}>
-          <div style={progressFill} />
-        </div>
-      </div>
-
-      <div style={content}>
-        <h1 style={title}>чем занимаетесь?</h1>
-        <p style={sub}>выберите одно</p>
-
-        <div style={optionsWrap}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {INDUSTRIES.map(({ emoji, label }) => {
-            const selected = picked === label
-            const optStyle: CSSProperties = {
-              ...sansStyle,
-              width: '100%',
-              height: 56,
-              borderRadius: 99,
-              fontSize: 15,
-              fontWeight: 500,
-              background: selected ? COLORS.ink : '#fff',
-              color: selected ? COLORS.cream : COLORS.ink,
-              border: selected
-                ? '1.5px solid transparent'
-                : '1.5px solid rgba(26,22,18,0.10)',
-              transition: 'all 200ms ease',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 10,
-            }
+            const sel = picked === label
             return (
-              <button key={label} style={optStyle} onClick={() => pick(label)}>
-                <span aria-hidden="true">{emoji}</span>
-                <span>{label}</span>
+              <button
+                key={label}
+                onClick={() => pick(label)}
+                style={{
+                  ...sansStyle,
+                  width: '100%',
+                  padding: '16px 20px',
+                  borderRadius: RADII.lg,
+                  fontSize: 15,
+                  fontWeight: sel ? 600 : 500,
+                  background: sel ? COLORS.ink : COLORS.white,
+                  color: sel ? COLORS.cream : COLORS.ink,
+                  border: sel ? '1.5px solid transparent' : '1.5px solid rgba(26,22,18,0.09)',
+                  boxShadow: sel ? SHADOWS.panel : SHADOWS.chip,
+                  transition: 'all 200ms cubic-bezier(0.22,1,0.36,1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                }}
+              >
+                <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0 }}>{emoji}</span>
+                <span style={{ flex: 1 }}>{label}</span>
+                {sel && (
+                  <span style={{
+                    width: 20, height: 20, borderRadius: RADII.full,
+                    background: COLORS.tomato, display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}>
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                      <path d="M2 5l2.2 2.2L8 2.8" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                )}
               </button>
             )
           })}
         </div>
       </div>
-    </div>
+    </OnbShell>
   )
 }

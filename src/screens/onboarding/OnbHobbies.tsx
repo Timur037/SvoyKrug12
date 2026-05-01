@@ -1,310 +1,111 @@
 import { useState } from 'react'
-import type { CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { COLORS, serifStyle, sansStyle } from '../../theme'
-import { Grain } from '../../components/Grain'
+import { COLORS, RADII, SHADOWS, serifStyle, sansStyle } from '../../theme'
+import { OnbShell } from '../../components/OnbShell'
 import { haptic } from '../../lib/telegram'
 
-const HOBBIES: { emoji: string; label: string }[] = [
-  { emoji: '🎵', label: 'музыка' },
-  { emoji: '✈️', label: 'путешествия' },
-  { emoji: '☕', label: 'кофе и чай' },
-  { emoji: '📚', label: 'книги' },
-  { emoji: '🎨', label: 'искусство' },
-  { emoji: '🧘', label: 'йога' },
-  { emoji: '🌿', label: 'природа и походы' },
-  { emoji: '🏃', label: 'спорт' },
-  { emoji: '🍳', label: 'кулинария' },
-  { emoji: '🎬', label: 'кино' },
-  { emoji: '📸', label: 'фотография' },
-  { emoji: '💼', label: 'бизнес' },
-  { emoji: '🧠', label: 'психология' },
-  { emoji: '💻', label: 'технологии' },
-  { emoji: '🎭', label: 'театр' },
-  { emoji: '🍷', label: 'вино' },
-  { emoji: '🎮', label: 'игры' },
-  { emoji: '🐾', label: 'животные' },
+const HOBBIES = [
+  { emoji: '🎵', label: 'музыка' }, { emoji: '✈️', label: 'путешествия' },
+  { emoji: '☕', label: 'кофе и чай' }, { emoji: '📚', label: 'книги' },
+  { emoji: '🎨', label: 'искусство' }, { emoji: '🧘', label: 'йога' },
+  { emoji: '🌿', label: 'природа и походы' }, { emoji: '🏃', label: 'спорт' },
+  { emoji: '🍳', label: 'кулинария' }, { emoji: '🎬', label: 'кино' },
+  { emoji: '📸', label: 'фотография' }, { emoji: '💼', label: 'бизнес' },
+  { emoji: '🧠', label: 'психология' }, { emoji: '💻', label: 'технологии' },
+  { emoji: '🎭', label: 'театр' }, { emoji: '🍷', label: 'вино' },
+  { emoji: '🎮', label: 'игры' }, { emoji: '🐾', label: 'животные' },
 ]
 
-const MAX_PICK = 10
-const STEP = 5
-const TOTAL = 7
+const MAX = 10
 
 export function OnbHobbies() {
   const navigate = useNavigate()
   const [picked, setPicked] = useState<string[]>([])
-  const [customInput, setCustomInput] = useState('')
-  const [customTags, setCustomTags] = useState<string[]>([])
 
   function toggle(label: string) {
     haptic('light')
-    setPicked((prev) => {
-      if (prev.includes(label)) return prev.filter((x) => x !== label)
-      if (prev.length >= MAX_PICK) return prev
+    setPicked(prev => {
+      if (prev.includes(label)) return prev.filter(x => x !== label)
+      if (prev.length >= MAX) return prev
       return [...prev, label]
     })
-  }
-
-  function addCustom() {
-    const val = customInput.trim().toLowerCase()
-    if (!val || picked.length >= MAX_PICK || customTags.includes(val) || HOBBIES.some(h => h.label === val)) return
-    haptic('light')
-    setCustomTags((prev) => [...prev, val])
-    setPicked((prev) => [...prev, val])
-    setCustomInput('')
   }
 
   function next() {
     if (picked.length === 0) return
     haptic('medium')
-    try {
-      localStorage.setItem('svoy_krug_hobbies', JSON.stringify(picked))
-    } catch {
-      // ignore
-    }
+    try { localStorage.setItem('svoy_krug_hobbies', JSON.stringify(picked)) } catch { /* ignore */ }
     navigate('/onboarding/qualities')
   }
 
-  const root: CSSProperties = {
-    position: 'relative',
-    background: COLORS.cream,
-    color: COLORS.ink,
-    minHeight: '100dvh',
-    display: 'flex',
-    flexDirection: 'column',
-  }
-  const header: CSSProperties = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-    paddingTop: 'env(safe-area-inset-top, 0px)',
-    background: 'rgba(245,239,230,0.96)',
-    backdropFilter: 'blur(10px)',
-    WebkitBackdropFilter: 'blur(10px)',
-  }
-  const headerInner: CSSProperties = {
-    position: 'relative',
-    height: 56,
-    display: 'flex',
-    alignItems: 'center',
-    padding: '0 16px',
-  }
-  const backBtn: CSSProperties = {
-    width: 40,
-    height: 40,
-    borderRadius: '50%',
-    background: 'rgba(26,22,18,0.06)',
-    border: '1px solid rgba(26,22,18,0.08)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: COLORS.ink,
-  }
-  const progressTrack: CSSProperties = {
-    height: 3,
-    width: '100%',
-    background: 'rgba(26,22,18,0.10)',
-    overflow: 'hidden',
-  }
-  const progressFill: CSSProperties = {
-    height: '100%',
-    width: `${(STEP / TOTAL) * 100}%`,
-    background: COLORS.tomato,
-    transition: 'width 400ms ease',
-  }
-  const content: CSSProperties = {
-    position: 'relative',
-    zIndex: 2,
-    flex: 1,
-    padding: '100px 22px 100px',
-    overflowY: 'auto',
-  }
-  const title: CSSProperties = {
-    ...serifStyle,
-    fontSize: 36,
-    lineHeight: 1.05,
-    margin: 0,
-    marginBottom: 6,
-    color: COLORS.ink,
-  }
-  const sub: CSSProperties = {
-    ...sansStyle,
-    fontSize: 14,
-    color: COLORS.inkSoft,
-    margin: 0,
-  }
-  const counter: CSSProperties = {
-    ...sansStyle,
-    fontSize: 12,
-    color: COLORS.inkSoft,
-    marginTop: 12,
-    letterSpacing: '0.04em',
-    textTransform: 'uppercase',
-  }
-  const tagsWrap: CSSProperties = {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 24,
-  }
-  const ctaWrap: CSSProperties = {
-    position: 'fixed',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 10,
-    padding: '16px 22px calc(env(safe-area-inset-bottom, 0px) + 16px)',
-    background: 'rgba(245,239,230,0.96)',
-    backdropFilter: 'blur(10px)',
-    WebkitBackdropFilter: 'blur(10px)',
-  }
-  const isActive = picked.length > 0
-  const ctaBtn: CSSProperties = {
-    ...sansStyle,
-    width: '100%',
-    height: 56,
-    borderRadius: 99,
-    fontSize: 15,
-    fontWeight: 700,
-    background: isActive ? COLORS.tomato : 'rgba(26,22,18,0.12)',
-    color: isActive ? COLORS.cream : 'rgba(26,22,18,0.35)',
-    border: 'none',
-    cursor: isActive ? 'pointer' : 'default',
-    transition: 'all 200ms ease',
-  }
-
   return (
-    <div style={root}>
-      <Grain opacity={0.3} />
-
-      <div style={header}>
-        <div style={headerInner}>
-          <button
-            style={backBtn}
-            aria-label="Назад"
-            onClick={() => {
-              haptic('light')
-              navigate('/onboarding/quiz2')
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M15 6l-6 6 6 6"
-                stroke={COLORS.ink}
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        </div>
-        <div style={progressTrack}>
-          <div style={progressFill} />
-        </div>
-      </div>
-
-      <div style={content}>
-        <h1 style={title}>чем вы увлекаетесь?</h1>
-        <p style={sub}>выберите до {MAX_PICK}</p>
-        <div style={counter}>
-          {picked.length} / {MAX_PICK}
-        </div>
-
-        <div style={tagsWrap}>
-          {[...HOBBIES, ...customTags.map(t => ({ emoji: '✨', label: t }))].map(({ emoji, label }) => {
-            const selected = picked.includes(label)
-            const disabled = !selected && picked.length >= MAX_PICK
-            const tagStyle: CSSProperties = {
-              ...sansStyle,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '10px 16px',
-              borderRadius: 99,
-              fontSize: 14,
-              fontWeight: 500,
-              background: selected ? COLORS.ink : '#fff',
-              color: selected ? COLORS.cream : COLORS.ink,
-              border: selected
-                ? '1.5px solid transparent'
-                : '1.5px solid rgba(26,22,18,0.10)',
-              transition: 'all 200ms ease',
-              opacity: disabled ? 0.4 : 1,
-              cursor: disabled ? 'default' : 'pointer',
-            }
+    <OnbShell step={5} total={7} backTo="/onboarding/quiz1">
+      <div style={{ padding: '32px 22px 140px', flex: 1, overflowY: 'auto', scrollbarWidth: 'none' }}>
+        <h1 style={{ margin: '0 0 6px', ...serifStyle, fontSize: 40, lineHeight: 1.0, color: COLORS.ink }}>
+          что вам интересно?
+        </h1>
+        <p style={{ ...sansStyle, fontSize: 14, color: COLORS.inkSoft, margin: '0 0 28px' }}>
+          выберите до {MAX} тем — найдём похожих
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9 }}>
+          {HOBBIES.map(({ emoji, label }) => {
+            const sel = picked.includes(label)
             return (
               <button
                 key={label}
-                style={tagStyle}
-                onClick={() => {
-                  if (disabled) return
-                  toggle(label)
+                onClick={() => toggle(label)}
+                style={{
+                  ...sansStyle,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 7,
+                  padding: '11px 16px',
+                  borderRadius: RADII.full,
+                  fontSize: 14,
+                  fontWeight: sel ? 600 : 500,
+                  background: sel ? COLORS.ink : COLORS.white,
+                  color: sel ? COLORS.cream : COLORS.ink,
+                  border: sel ? '1.5px solid transparent' : '1.5px solid rgba(26,22,18,0.10)',
+                  boxShadow: sel ? SHADOWS.panel : SHADOWS.chip,
+                  transition: 'all 180ms cubic-bezier(0.22,1,0.36,1)',
+                  transform: sel ? 'scale(1.04)' : 'scale(1)',
+                  cursor: 'pointer',
                 }}
               >
-                <span aria-hidden="true">{emoji}</span>
-                <span>{label}</span>
+                <span style={{ fontSize: 16 }}>{emoji}</span>
+                {label}
               </button>
             )
           })}
         </div>
-
-        {/* Custom input */}
-        <div style={{
-          display: 'flex',
-          gap: 8,
-          marginTop: 20,
-          alignItems: 'center',
-        }}>
-          <input
-            value={customInput}
-            onChange={(e) => setCustomInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') addCustom() }}
-            placeholder="своё увлечение..."
-            maxLength={30}
-            style={{
-              ...sansStyle,
-              flex: 1,
-              height: 44,
-              borderRadius: 99,
-              border: '1.5px solid rgba(26,22,18,0.12)',
-              background: '#fff',
-              padding: '0 16px',
-              fontSize: 14,
-              color: COLORS.ink,
-              outline: 'none',
-            } as CSSProperties}
-          />
-          <button
-            onClick={addCustom}
-            disabled={!customInput.trim() || picked.length >= MAX_PICK}
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: '50%',
-              background: customInput.trim() && picked.length < MAX_PICK ? COLORS.tomato : 'rgba(26,22,18,0.10)',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              cursor: customInput.trim() && picked.length < MAX_PICK ? 'pointer' : 'default',
-              transition: 'background 200ms ease',
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M12 5v14M5 12h14" stroke={customInput.trim() && picked.length < MAX_PICK ? COLORS.cream : 'rgba(26,22,18,0.35)'} strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </button>
-        </div>
       </div>
 
-      <div style={ctaWrap}>
-        <button style={ctaBtn} onClick={next} disabled={!isActive}>
-          {isActive ? 'дальше →' : 'выберите хотя бы одно'}
+      <div style={{
+        position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 10,
+        padding: '14px 22px calc(env(safe-area-inset-bottom, 0px) + 14px)',
+        background: 'rgba(245,239,230,0.95)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        borderTop: '1px solid rgba(26,22,18,0.07)',
+      }}>
+        <div style={{ ...sansStyle, fontSize: 12, color: COLORS.inkSoft, textAlign: 'center', marginBottom: 10 }}>
+          {picked.length === 0 ? 'выберите хотя бы одно' : `выбрано: ${picked.length}`}
+        </div>
+        <button
+          onClick={next}
+          disabled={picked.length === 0}
+          style={{
+            ...sansStyle, width: '100%', height: 56, borderRadius: RADII.full,
+            fontSize: 15, fontWeight: 700,
+            background: picked.length > 0 ? COLORS.tomato : 'rgba(26,22,18,0.10)',
+            color: picked.length > 0 ? COLORS.cream : COLORS.inkSoft,
+            border: 'none', boxShadow: picked.length > 0 ? SHADOWS.cta : 'none',
+            transition: 'all 220ms ease', cursor: picked.length > 0 ? 'pointer' : 'default',
+          }}
+        >
+          дальше →
         </button>
       </div>
-    </div>
+    </OnbShell>
   )
 }
