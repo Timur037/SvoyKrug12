@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
-import type { CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { COLORS, serifStyle, sansStyle } from '../theme'
+import { COLORS, RADII, SHADOWS, serifStyle, sansStyle, overlineStyle } from '../theme'
 import { Grain } from '../components/Grain'
 import { TabBar } from '../components/TabBar'
 import { Seats } from '../components/Seats'
@@ -13,12 +12,7 @@ import { useUser } from '../context/UserContext'
 
 const DAY_NAMES = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс']
 
-interface WeekDay {
-  d: string
-  n: number
-  fullDate: Date
-  hot?: boolean
-}
+interface WeekDay { d: string; n: number; fullDate: Date; hot?: boolean }
 
 function getWeekDays(today: Date): WeekDay[] {
   const dow = today.getDay()
@@ -69,16 +63,6 @@ export function CalendarScreen() {
       .catch(console.error)
   }, [user])
 
-  const root: CSSProperties = {
-    position: 'relative',
-    width: '100%',
-    height: '100dvh',
-    background: COLORS.cream,
-    color: COLORS.ink,
-    overflowX: 'hidden',
-    overflowY: 'auto',
-  }
-
   function openPastMeetup(m: DbMeetup) {
     haptic('light')
     try { localStorage.setItem('svoy_krug_review_meetup', m.id) } catch { /* ignore */ }
@@ -87,358 +71,190 @@ export function CalendarScreen() {
 
   return (
     <PageTransition>
-      <div style={root}>
-        <Grain opacity={0.3} />
-        <div style={{ paddingTop: 64, paddingBottom: 110 }}>
+      <div style={{
+        position: 'relative',
+        width: '100%',
+        height: '100dvh',
+        background: COLORS.cream,
+        color: COLORS.ink,
+        overflowX: 'hidden',
+        overflowY: 'auto',
+        scrollbarWidth: 'none',
+      }}>
+        <Grain opacity={0.25} />
+        <style>{`@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }`}</style>
+
+        <div style={{ paddingTop: 60, paddingBottom: 110 }}>
 
           {/* Header */}
-          <div style={{ padding: '0 22px 12px' }}>
-            <div style={{ ...sansStyle, fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: COLORS.inkSoft, textTransform: 'uppercase' }}>
-              мой вечер
-            </div>
-            <h1 style={{ margin: '10px 0 0', fontSize: 42, lineHeight: 0.98, letterSpacing: '-0.02em' }}>
+          <div style={{ padding: '0 24px 20px' }}>
+            <span style={{ ...overlineStyle, color: COLORS.inkSoft, display: 'block', marginBottom: 10 }}>мой вечер</span>
+            <h1 style={{ margin: 0, fontSize: 44, lineHeight: 0.95, letterSpacing: '-0.025em' }}>
               <span style={serifStyle}>что у вас </span>
-              <span style={{ ...sansStyle, fontWeight: 700 }}>впереди.</span>
+              <span style={{ ...sansStyle, fontWeight: 800 }}>впереди.</span>
             </h1>
-
-            {/* Streak badge */}
             {past.length >= 2 && (
               <div style={{
-                background: COLORS.honey,
-                color: COLORS.ink,
-                padding: '6px 12px',
-                borderRadius: 99,
-                ...sansStyle,
-                fontSize: 12,
-                fontWeight: 700,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                marginTop: 10,
+                display: 'inline-flex', alignItems: 'center', gap: 7,
+                background: COLORS.honey, color: COLORS.ink,
+                padding: '7px 14px', borderRadius: RADII.full,
+                ...sansStyle, fontSize: 12, fontWeight: 700, marginTop: 14,
               }}>
-                <span aria-hidden="true">🔥</span>
-                <span>{past.length} {past.length === 1 ? 'вечер' : past.length < 5 ? 'вечера' : 'вечеров'} подряд</span>
+                🔥 {past.length} {past.length < 5 ? 'вечера' : 'вечеров'} подряд
               </div>
             )}
           </div>
 
           {/* Week strip */}
           <div style={{
-            margin: '14px 22px 24px',
-            padding: '16px',
-            borderRadius: 20,
-            background: '#fff',
+            margin: '0 18px 24px',
+            padding: '18px 16px',
+            borderRadius: RADII.xl,
+            background: COLORS.white,
             border: '1px solid rgba(26,22,18,0.06)',
-            boxShadow: '0 2px 12px rgba(26,22,18,0.05)',
+            boxShadow: SHADOWS.panel,
           }}>
-            <div style={{
-              ...sansStyle,
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: '0.12em',
-              color: COLORS.inkSoft,
-              textTransform: 'uppercase',
-              marginBottom: 12,
-            }}>
+            <div style={{ ...sansStyle, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: COLORS.inkSoft, textTransform: 'uppercase', marginBottom: 14 }}>
               {today.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
               {week.map((d) => {
-                const isToday =
-                  d.fullDate.getDate() === today.getDate() &&
-                  d.fullDate.getMonth() === today.getMonth() &&
-                  d.fullDate.getFullYear() === today.getFullYear()
+                const isToday = d.fullDate.toDateString() === today.toDateString()
                 return (
                   <button
                     key={d.n}
-                    style={{ textAlign: 'center', background: 'transparent', border: 'none', padding: '2px 0' }}
-                    onClick={() => {
-                      haptic('light')
-                      if (d.hot) navigate('/group')
-                    }}
+                    style={{ textAlign: 'center', background: 'transparent', border: 'none', padding: '2px 0', cursor: d.hot ? 'pointer' : 'default' }}
+                    onClick={() => { if (d.hot) { haptic('light'); navigate('/group') } }}
                   >
-                    <div style={{
-                      ...sansStyle,
-                      fontSize: 9,
-                      fontWeight: 700,
-                      color: d.hot ? COLORS.tomato : isToday ? COLORS.tomato : COLORS.inkSoft,
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                    }}>
+                    <div style={{ ...sansStyle, fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: d.hot ? COLORS.tomato : isToday ? COLORS.tomato : COLORS.inkSoft }}>
                       {d.d}
                     </div>
                     <div style={{
                       marginTop: 5,
-                      width: 32,
-                      height: 32,
-                      lineHeight: '32px',
-                      textAlign: 'center',
-                      borderRadius: 99,
-                      ...sansStyle,
-                      fontSize: 14,
-                      fontWeight: 700,
-                      marginInline: 'auto',
-                      fontVariantNumeric: 'tabular-nums',
+                      width: 32, height: 32, lineHeight: '32px',
+                      textAlign: 'center', borderRadius: RADII.full,
+                      ...sansStyle, fontSize: 14, fontWeight: 700,
+                      marginInline: 'auto', fontVariantNumeric: 'tabular-nums',
                       background: d.hot ? COLORS.tomato : isToday ? COLORS.cream2 : 'transparent',
                       color: d.hot ? COLORS.cream : COLORS.ink,
                       border: isToday && !d.hot ? `1.5px solid ${COLORS.tomato}` : 'none',
                       boxShadow: d.hot ? '0 4px 12px rgba(232,71,44,0.35)' : 'none',
-                      transition: 'background 200ms, box-shadow 200ms',
                     }}>
                       {d.n}
                     </div>
-                    {d.hot && (
-                      <div
-                        aria-hidden="true"
-                        style={{
-                          width: 4,
-                          height: 4,
-                          borderRadius: '50%',
-                          background: COLORS.tomato,
-                          margin: '3px auto 0',
-                        }}
-                      />
-                    )}
+                    {d.hot && <div style={{ width: 4, height: 4, borderRadius: '50%', background: COLORS.tomato, margin: '4px auto 0' }} />}
                   </button>
                 )
               })}
             </div>
           </div>
 
-          {/* Title above the card */}
-          {upcoming && (
-            <div style={{ padding: '0 22px 12px' }}>
-              <div style={{
-                ...sansStyle,
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: '0.16em',
-                color: COLORS.tomato,
-                textTransform: 'uppercase',
-                marginBottom: 8,
-              }}>
-                ваш ближайший круг
-              </div>
-              <h2 style={{
-                ...serifStyle,
-                margin: 0,
-                fontSize: 36,
-                lineHeight: 1.0,
-                color: COLORS.ink,
-                letterSpacing: '-0.01em',
-                maxWidth: 320,
-              }}>
-                {upcoming.title}
-              </h2>
+          {/* Upcoming */}
+          {upcoming ? (
+            <div style={{ padding: '0 18px 8px' }}>
+              <span style={{ ...overlineStyle, color: COLORS.tomato, display: 'block', marginBottom: 14 }}>ваш ближайший круг</span>
+              <button
+                style={{
+                  display: 'block', width: '100%',
+                  borderRadius: RADII.xl, overflow: 'hidden',
+                  background: COLORS.ink, color: COLORS.cream,
+                  boxShadow: '0 20px 50px rgba(26,22,18,0.22)',
+                  border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer',
+                  animation: 'fadeUp 400ms cubic-bezier(0.22,1,0.36,1) both',
+                }}
+                onClick={() => {
+                  haptic('medium')
+                  if (upcoming?.circle_id) {
+                    try { localStorage.setItem('svoy_krug_last_circle', upcoming.circle_id) } catch { /* ignore */ }
+                  }
+                  navigate('/circle')
+                }}
+              >
+                {upcoming.photo && (
+                  <div style={{ position: 'relative', height: 130, overflow: 'hidden' }}>
+                    <img src={upcoming.photo} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.80)' }} />
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 20%, rgba(26,22,18,0.88) 100%)' }} />
+                  </div>
+                )}
+                <div style={{ padding: '20px 22px 22px', position: 'relative' }}>
+                  <Grain opacity={0.15} />
+                  <div style={{ position: 'relative', zIndex: 2 }}>
+                    <div style={{ ...overlineStyle, color: 'rgba(245,239,230,0.55)', marginBottom: 8 }}>{upcoming.date_label}</div>
+                    <div style={{ ...serifStyle, fontSize: 28, lineHeight: 1.05, color: COLORS.cream, marginBottom: 4 }}>{upcoming.title}</div>
+                    <div style={{ ...sansStyle, fontSize: 12, color: 'rgba(245,239,230,0.60)', marginBottom: 16 }}>{upcoming.place}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Seats taken={upcoming.taken} total={upcoming.seats} dark />
+                      <span style={{ ...sansStyle, background: COLORS.tomato, color: COLORS.cream, padding: '10px 18px', borderRadius: RADII.full, fontSize: 13, fontWeight: 700, boxShadow: SHADOWS.cta }}>
+                        детали →
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </button>
             </div>
-          )}
-
-          {/* Upcoming card */}
-          {upcoming && (
-            <button
-              style={{
-                display: 'block',
-                width: 'calc(100% - 44px)',
-                margin: '0 22px 16px',
-                borderRadius: 24,
-                overflow: 'hidden',
-                background: COLORS.tomato,
-                color: COLORS.cream,
-                boxShadow: '0 20px 48px rgba(232,71,44,0.30), 0 4px 12px rgba(232,71,44,0.15)',
-                position: 'relative',
-                border: 'none',
-                padding: 0,
-                textAlign: 'left',
-                animation: 'fadeIn 400ms cubic-bezier(0.22,1,0.36,1) both',
-                transition: 'transform 200ms ease, box-shadow 200ms ease',
-              }}
-              onClick={() => {
-                haptic('medium')
-                if (upcoming?.circle_id) {
-                  try { localStorage.setItem('svoy_krug_last_circle', upcoming.circle_id) } catch { /* ignore */ }
-                }
-                navigate('/circle')
-              }}
-              aria-label="Открыть детали вечера"
-            >
-              {upcoming.photo && (
-                <div style={{ position: 'relative', height: 140, overflow: 'hidden' }}>
-                  <img
-                    src={upcoming.photo}
-                    alt=""
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      filter: 'saturate(1.05) brightness(0.85) sepia(0.06)',
-                    }}
-                  />
-                  <div style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'linear-gradient(180deg, rgba(232,71,44,0.18) 0%, rgba(232,71,44,0.78) 100%)',
-                  }} />
-                </div>
-              )}
-
-              <div style={{ padding: '18px 22px 22px', position: 'relative' }}>
-                <Grain opacity={0.18} />
-                <div style={{ position: 'relative', zIndex: 2 }}>
-                  <div style={{
-                    ...sansStyle,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    letterSpacing: '0.12em',
-                    color: COLORS.cream,
-                    opacity: 0.95,
-                    textTransform: 'uppercase',
-                  }}>
-                    {upcoming.date_label}
-                  </div>
-                  <div style={{ ...sansStyle, fontSize: 13, color: 'rgba(245,239,230,0.82)', marginTop: 4 }}>
-                    {upcoming.place}
-                  </div>
-                  <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Seats taken={upcoming.taken} total={upcoming.seats} dark />
-                    <span style={{
-                      background: COLORS.ink,
-                      color: COLORS.cream,
-                      border: 'none',
-                      padding: '10px 16px',
-                      borderRadius: 99,
-                      ...sansStyle,
-                      fontSize: 13,
-                      fontWeight: 700,
-                      display: 'inline-block',
-                    }}>
-                      детали →
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </button>
-          )}
-
-          {/* Empty state - no upcoming */}
-          {!upcoming && (
-            <div style={{ padding: '0 22px 24px' }}>
+          ) : (
+            <div style={{ padding: '0 18px 24px' }}>
               <div style={{
-                padding: '20px',
-                borderRadius: 20,
-                background: '#fff',
-                border: '1px solid rgba(26,22,18,0.06)',
-                textAlign: 'center',
+                padding: '28px 22px', borderRadius: RADII.xl,
+                background: COLORS.white, border: '1px solid rgba(26,22,18,0.06)',
+                boxShadow: SHADOWS.panel, textAlign: 'center',
               }}>
-                <div style={{ ...serifStyle, fontSize: 22, color: COLORS.ink, marginBottom: 8 }}>вечеров пока нет</div>
-                <div style={{ ...sansStyle, fontSize: 13, color: COLORS.inkSoft }}>загляните на главную и найдите свой круг.</div>
+                <div style={{ ...serifStyle, fontSize: 24, color: COLORS.ink, marginBottom: 8 }}>вечеров пока нет</div>
+                <div style={{ ...sansStyle, fontSize: 13, color: COLORS.inkSoft, marginBottom: 18 }}>загляните на главную и найдите свой круг</div>
+                <button
+                  onClick={() => { haptic('light'); navigate('/home') }}
+                  style={{ ...sansStyle, background: COLORS.ink, color: COLORS.cream, padding: '12px 22px', borderRadius: RADII.full, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  найти круг →
+                </button>
               </div>
             </div>
           )}
 
           {/* Past */}
           {past.length > 0 && (
-            <div style={{ padding: '4px 22px 0' }}>
-              <div style={{
-                ...sansStyle,
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: '0.1em',
-                color: COLORS.inkSoft,
-                textTransform: 'uppercase',
-                marginBottom: 10,
-              }}>
-                было раньше
+            <div style={{ padding: '8px 18px 0' }}>
+              <span style={{ ...overlineStyle, color: COLORS.inkSoft, display: 'block', marginBottom: 14 }}>было раньше</span>
+              <div style={{ background: COLORS.white, borderRadius: RADII.xl, border: '1px solid rgba(26,22,18,0.06)', boxShadow: SHADOWS.panel, overflow: 'hidden' }}>
+                {past.map((p, i) => (
+                  <button
+                    key={p.id}
+                    onClick={() => openPastMeetup(p)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 14,
+                      padding: '14px 18px',
+                      borderTop: i === 0 ? 'none' : '1px solid rgba(26,22,18,0.06)',
+                      width: '100%', background: 'transparent',
+                      border: 'none', borderBottom: 'none', borderLeft: 'none', borderRight: 'none',
+                      cursor: 'pointer', textAlign: 'left',
+                    }}
+                  >
+                    {p.photo ? (
+                      <img src={p.photo} alt="" style={{ width: 44, height: 44, borderRadius: RADII.md, objectFit: 'cover', flexShrink: 0 }} />
+                    ) : (
+                      <div style={{ width: 44, height: 44, borderRadius: RADII.md, background: COLORS.cream2, display: 'flex', alignItems: 'center', justifyContent: 'center', ...serifStyle, fontSize: 20, flexShrink: 0 }}>
+                        {(p.title?.[0] ?? '·').toLowerCase()}
+                      </div>
+                    )}
+                    <div style={{ ...sansStyle, fontSize: 11, fontWeight: 700, color: COLORS.inkSoft, letterSpacing: '0.04em', flexShrink: 0, width: 44 }}>{p.date_label}</div>
+                    <div style={{ flex: 1, ...serifStyle, fontSize: 18, color: COLORS.ink }}>{p.title}</div>
+                    <span style={{
+                      ...sansStyle, fontSize: 11, fontWeight: 600, flexShrink: 0,
+                      color: p.mood ? COLORS.tomato : COLORS.inkSoft,
+                      background: p.mood ? COLORS.tomatoLight : COLORS.cream2,
+                      padding: '5px 11px', borderRadius: RADII.full,
+                    }}>
+                      {p.mood ?? 'оценить →'}
+                    </span>
+                  </button>
+                ))}
               </div>
-              {past.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => openPastMeetup(p)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 14,
-                    padding: '14px 0',
-                    borderTop: '1px solid rgba(26,22,18,0.08)',
-                    width: '100%',
-                    background: 'transparent',
-                    border: 'none',
-                    borderBottom: 'none',
-                    borderLeft: 'none',
-                    borderRight: 'none',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  {p.photo ? (
-                    <img
-                      src={p.photo}
-                      alt=""
-                      style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
-                    />
-                  ) : (
-                    <div
-                      aria-hidden="true"
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 10,
-                        background: COLORS.cream2,
-                        color: COLORS.ink,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        ...serifStyle,
-                        fontSize: 20,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {(p.title?.[0] ?? '·').toLowerCase()}
-                    </div>
-                  )}
-                  <div style={{ width: 48, ...sansStyle, fontSize: 11, fontWeight: 700, color: COLORS.inkSoft, letterSpacing: '0.04em', flexShrink: 0 }}>
-                    {p.date_label}
-                  </div>
-                  <div style={{ flex: 1, ...serifStyle, fontSize: 20, color: COLORS.ink }}>
-                    {p.title}
-                  </div>
-                  {p.mood && (
-                    <span style={{
-                      ...sansStyle,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: COLORS.tomato,
-                      background: 'rgba(232,71,44,0.10)',
-                      padding: '4px 10px',
-                      borderRadius: 99,
-                      flexShrink: 0,
-                    }}>
-                      {p.mood}
-                    </span>
-                  )}
-                  {!p.mood && (
-                    <span style={{
-                      ...sansStyle,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: COLORS.inkSoft,
-                      background: COLORS.cream2,
-                      padding: '4px 10px',
-                      borderRadius: 99,
-                      flexShrink: 0,
-                    }}>
-                      оценить →
-                    </span>
-                  )}
-                </button>
-              ))}
             </div>
           )}
 
-          {/* Motivational footer */}
-          <div style={{ padding: '24px 22px', textAlign: 'center' }}>
-            <div style={{ ...serifStyle, fontSize: 20, color: COLORS.inkSoft, lineHeight: 1.3 }}>
+          {/* Footer quote */}
+          <div style={{ padding: '32px 24px 0', textAlign: 'center' }}>
+            <div style={{ ...serifStyle, fontSize: 18, color: COLORS.inkSoft, lineHeight: 1.4 }}>
               каждый вечер — это кто-то новый,<br />кто станет вашим.
             </div>
           </div>
