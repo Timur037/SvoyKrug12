@@ -145,7 +145,7 @@ export function OnbDistrict() {
       </div>
 
       <div style={content}>
-        <h1 style={title}>где живёте?</h1>
+        <h1 style={title}>где предпочитаете встречаться?</h1>
         <p style={sub}>выберите район Москвы</p>
 
         <div style={tagsWrap}>
