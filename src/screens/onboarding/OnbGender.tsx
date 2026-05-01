@@ -8,7 +8,7 @@ import { haptic } from '../../lib/telegram'
 const OPTIONS = ['мужчина', 'женщина', 'другое'] as const
 
 const STEP = 1
-const TOTAL = 4
+const TOTAL = 7
 
 export function OnbGender() {
   const navigate = useNavigate()
@@ -23,7 +23,7 @@ export function OnbGender() {
     } catch {
       // ignore
     }
-    setTimeout(() => navigate('/onboarding/quiz1'), 220)
+    setTimeout(() => navigate('/onboarding/age'), 220)
   }
 
   const root: CSSProperties = {

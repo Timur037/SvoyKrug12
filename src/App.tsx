@@ -17,6 +17,9 @@ import { Quiz5 } from './screens/onboarding/Quiz5'
 import { OnbHobbies } from './screens/onboarding/OnbHobbies'
 import { OnbQualities } from './screens/onboarding/OnbQualities'
 import { OnbGender } from './screens/onboarding/OnbGender'
+import { OnbAge } from './screens/onboarding/OnbAge'
+import { OnbWork } from './screens/onboarding/OnbWork'
+import { OnbDistrict } from './screens/onboarding/OnbDistrict'
 import { OnbDone } from './screens/onboarding/OnbDone'
 import { HomeScreen } from './screens/HomeScreen'
 import { CalendarScreen } from './screens/CalendarScreen'
@@ -62,6 +65,9 @@ export default function App() {
           <Route path="/onboarding/hobbies" element={<OnbHobbies />} />
           <Route path="/onboarding/qualities" element={<OnbQualities />} />
           <Route path="/onboarding/gender" element={<OnbGender />} />
+          <Route path="/onboarding/age" element={<OnbAge />} />
+          <Route path="/onboarding/work" element={<OnbWork />} />
+          <Route path="/onboarding/district" element={<OnbDistrict />} />
           <Route path="/onboarding/done" element={<OnbDone />} />
           <Route path="/home" element={<HomeScreen />} />
           <Route path="/calendar" element={<CalendarScreen />} />

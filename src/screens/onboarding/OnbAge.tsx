@@ -5,45 +5,36 @@ import { COLORS, serifStyle, sansStyle } from '../../theme'
 import { Grain } from '../../components/Grain'
 import { haptic } from '../../lib/telegram'
 
-const QUALITIES: { emoji: string; label: string }[] = [
-  { emoji: '⭐', label: 'честность' },
-  { emoji: '👀', label: 'внимательность' },
-  { emoji: '🔥', label: 'теплота' },
-  { emoji: '🌿', label: 'спокойствие' },
-  { emoji: '⚡', label: 'энергия' },
-  { emoji: '😂', label: 'юмор' },
-  { emoji: '🎯', label: 'прямота' },
-  { emoji: '🌟', label: 'харизма' },
-  { emoji: '🧠', label: 'глубина' },
-  { emoji: '💡', label: 'любопытство' },
-]
-
-const MAX_PICK = 3
-const STEP = 6
+const STEP = 2
 const TOTAL = 7
+const MIN_AGE = 18
+const MAX_AGE = 65
+const DEFAULT_AGE = 27
 
-export function OnbQualities() {
+export function OnbAge() {
   const navigate = useNavigate()
-  const [picked, setPicked] = useState<string[]>([])
+  const [age, setAge] = useState<number>(DEFAULT_AGE)
 
-  function toggle(label: string) {
+  function decrement() {
+    if (age <= MIN_AGE) return
     haptic('light')
-    setPicked((prev) => {
-      if (prev.includes(label)) return prev.filter((x) => x !== label)
-      if (prev.length >= MAX_PICK) return prev
-      return [...prev, label]
-    })
+    setAge((v) => Math.max(MIN_AGE, v - 1))
+  }
+
+  function increment() {
+    if (age >= MAX_AGE) return
+    haptic('light')
+    setAge((v) => Math.min(MAX_AGE, v + 1))
   }
 
   function next() {
-    if (picked.length === 0) return
     haptic('medium')
     try {
-      localStorage.setItem('svoy_krug_qualities', JSON.stringify(picked))
+      localStorage.setItem('svoy_krug_age', String(age))
     } catch {
       // ignore
     }
-    navigate('/onboarding/done')
+    navigate('/onboarding/work')
   }
 
   const root: CSSProperties = {
@@ -107,28 +98,44 @@ export function OnbQualities() {
     fontSize: 36,
     lineHeight: 1.05,
     margin: 0,
-    marginBottom: 6,
+    marginBottom: 48,
     color: COLORS.ink,
   }
-  const sub: CSSProperties = {
-    ...sansStyle,
-    fontSize: 14,
-    color: COLORS.inkSoft,
-    margin: 0,
-  }
-  const counter: CSSProperties = {
-    ...sansStyle,
-    fontSize: 12,
-    color: COLORS.inkSoft,
-    marginTop: 12,
-    letterSpacing: '0.04em',
-    textTransform: 'uppercase',
-  }
-  const tagsWrap: CSSProperties = {
+  const stepperWrap: CSSProperties = {
     display: 'flex',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 32,
+  }
+  const stepperBtn: CSSProperties = {
+    width: 56,
+    height: 56,
+    borderRadius: '50%',
+    background: '#fff',
+    border: '1.5px solid rgba(26,22,18,0.12)',
+    ...sansStyle,
+    fontSize: 24,
+    fontWeight: 300,
+    color: COLORS.ink,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+  }
+  const ageDisplay: CSSProperties = {
+    ...serifStyle,
+    fontSize: 96,
+    lineHeight: 1,
+    color: COLORS.tomato,
+    minWidth: 120,
+    textAlign: 'center',
+  }
+  const helperText: CSSProperties = {
+    ...sansStyle,
+    fontSize: 13,
+    color: COLORS.inkSoft,
+    textAlign: 'center',
+    marginTop: 20,
   }
   const ctaWrap: CSSProperties = {
     position: 'fixed',
@@ -141,7 +148,6 @@ export function OnbQualities() {
     backdropFilter: 'blur(10px)',
     WebkitBackdropFilter: 'blur(10px)',
   }
-  const isActive = picked.length > 0
   const ctaBtn: CSSProperties = {
     ...sansStyle,
     width: '100%',
@@ -149,10 +155,10 @@ export function OnbQualities() {
     borderRadius: 99,
     fontSize: 15,
     fontWeight: 700,
-    background: isActive ? COLORS.tomato : 'rgba(26,22,18,0.12)',
-    color: isActive ? COLORS.cream : 'rgba(26,22,18,0.35)',
+    background: COLORS.tomato,
+    color: COLORS.cream,
     border: 'none',
-    cursor: isActive ? 'pointer' : 'default',
+    cursor: 'pointer',
     transition: 'all 200ms ease',
   }
 
@@ -167,7 +173,7 @@ export function OnbQualities() {
             aria-label="Назад"
             onClick={() => {
               haptic('light')
-              navigate('/onboarding/hobbies')
+              navigate('/onboarding/gender')
             }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -187,54 +193,34 @@ export function OnbQualities() {
       </div>
 
       <div style={content}>
-        <h1 style={title}>что цените в людях?</h1>
-        <p style={sub}>выберите до {MAX_PICK}</p>
-        <div style={counter}>
-          {picked.length} / {MAX_PICK}
+        <h1 style={title}>сколько вам лет?</h1>
+
+        <div style={stepperWrap}>
+          <button
+            style={stepperBtn}
+            onClick={decrement}
+            aria-label="Уменьшить возраст"
+            disabled={age <= MIN_AGE}
+          >
+            —
+          </button>
+          <span style={ageDisplay}>{age}</span>
+          <button
+            style={stepperBtn}
+            onClick={increment}
+            aria-label="Увеличить возраст"
+            disabled={age >= MAX_AGE}
+          >
+            +
+          </button>
         </div>
 
-        <div style={tagsWrap}>
-          {QUALITIES.map(({ emoji, label }) => {
-            const selected = picked.includes(label)
-            const disabled = !selected && picked.length >= MAX_PICK
-            const tagStyle: CSSProperties = {
-              ...sansStyle,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '10px 16px',
-              borderRadius: 99,
-              fontSize: 14,
-              fontWeight: 500,
-              background: selected ? COLORS.ink : '#fff',
-              color: selected ? COLORS.cream : COLORS.ink,
-              border: selected
-                ? '1.5px solid transparent'
-                : '1.5px solid rgba(26,22,18,0.10)',
-              transition: 'all 200ms ease',
-              opacity: disabled ? 0.4 : 1,
-              cursor: disabled ? 'default' : 'pointer',
-            }
-            return (
-              <button
-                key={label}
-                style={tagStyle}
-                onClick={() => {
-                  if (disabled) return
-                  toggle(label)
-                }}
-              >
-                <span aria-hidden="true">{emoji}</span>
-                <span>{label}</span>
-              </button>
-            )
-          })}
-        </div>
+        <div style={helperText}>от 18 до 65 лет</div>
       </div>
 
       <div style={ctaWrap}>
-        <button style={ctaBtn} onClick={next} disabled={!isActive}>
-          {isActive ? 'дальше →' : 'выберите хотя бы одно'}
+        <button style={ctaBtn} onClick={next}>
+          дальше →
         </button>
       </div>
     </div>

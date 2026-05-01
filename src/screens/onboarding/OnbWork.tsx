@@ -5,45 +5,38 @@ import { COLORS, serifStyle, sansStyle } from '../../theme'
 import { Grain } from '../../components/Grain'
 import { haptic } from '../../lib/telegram'
 
-const QUALITIES: { emoji: string; label: string }[] = [
-  { emoji: '⭐', label: 'честность' },
-  { emoji: '👀', label: 'внимательность' },
-  { emoji: '🔥', label: 'теплота' },
-  { emoji: '🌿', label: 'спокойствие' },
-  { emoji: '⚡', label: 'энергия' },
-  { emoji: '😂', label: 'юмор' },
-  { emoji: '🎯', label: 'прямота' },
-  { emoji: '🌟', label: 'харизма' },
-  { emoji: '🧠', label: 'глубина' },
-  { emoji: '💡', label: 'любопытство' },
-]
-
-const MAX_PICK = 3
-const STEP = 6
+const STEP = 3
 const TOTAL = 7
 
-export function OnbQualities() {
+const INDUSTRIES: { emoji: string; label: string }[] = [
+  { emoji: '💻', label: 'технологии / IT' },
+  { emoji: '💰', label: 'финансы и банки' },
+  { emoji: '🏥', label: 'медицина' },
+  { emoji: '🎨', label: 'дизайн и творчество' },
+  { emoji: '📱', label: 'маркетинг / медиа' },
+  { emoji: '🏗️', label: 'строительство / недвижимость' },
+  { emoji: '📚', label: 'образование / наука' },
+  { emoji: '⚖️', label: 'юриспруденция' },
+  { emoji: '🍕', label: 'рестораны / еда' },
+  { emoji: '🤝', label: 'продажи / консалтинг' },
+  { emoji: '🎓', label: 'студент' },
+  { emoji: '✨', label: 'другое' },
+]
+
+export function OnbWork() {
   const navigate = useNavigate()
-  const [picked, setPicked] = useState<string[]>([])
+  const [picked, setPicked] = useState<string | null>(null)
 
-  function toggle(label: string) {
+  function pick(val: string) {
+    if (picked) return
     haptic('light')
-    setPicked((prev) => {
-      if (prev.includes(label)) return prev.filter((x) => x !== label)
-      if (prev.length >= MAX_PICK) return prev
-      return [...prev, label]
-    })
-  }
-
-  function next() {
-    if (picked.length === 0) return
-    haptic('medium')
+    setPicked(val)
     try {
-      localStorage.setItem('svoy_krug_qualities', JSON.stringify(picked))
+      localStorage.setItem('svoy_krug_work', val)
     } catch {
       // ignore
     }
-    navigate('/onboarding/done')
+    setTimeout(() => navigate('/onboarding/district'), 220)
   }
 
   const root: CSSProperties = {
@@ -99,7 +92,7 @@ export function OnbQualities() {
     position: 'relative',
     zIndex: 2,
     flex: 1,
-    padding: '100px 22px 100px',
+    padding: '100px 22px 32px',
     overflowY: 'auto',
   }
   const title: CSSProperties = {
@@ -107,7 +100,7 @@ export function OnbQualities() {
     fontSize: 36,
     lineHeight: 1.05,
     margin: 0,
-    marginBottom: 6,
+    marginBottom: 8,
     color: COLORS.ink,
   }
   const sub: CSSProperties = {
@@ -116,44 +109,11 @@ export function OnbQualities() {
     color: COLORS.inkSoft,
     margin: 0,
   }
-  const counter: CSSProperties = {
-    ...sansStyle,
-    fontSize: 12,
-    color: COLORS.inkSoft,
-    marginTop: 12,
-    letterSpacing: '0.04em',
-    textTransform: 'uppercase',
-  }
-  const tagsWrap: CSSProperties = {
+  const optionsWrap: CSSProperties = {
     display: 'flex',
-    flexWrap: 'wrap',
+    flexDirection: 'column',
     gap: 10,
     marginTop: 24,
-  }
-  const ctaWrap: CSSProperties = {
-    position: 'fixed',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 10,
-    padding: '16px 22px calc(env(safe-area-inset-bottom, 0px) + 16px)',
-    background: 'rgba(245,239,230,0.96)',
-    backdropFilter: 'blur(10px)',
-    WebkitBackdropFilter: 'blur(10px)',
-  }
-  const isActive = picked.length > 0
-  const ctaBtn: CSSProperties = {
-    ...sansStyle,
-    width: '100%',
-    height: 56,
-    borderRadius: 99,
-    fontSize: 15,
-    fontWeight: 700,
-    background: isActive ? COLORS.tomato : 'rgba(26,22,18,0.12)',
-    color: isActive ? COLORS.cream : 'rgba(26,22,18,0.35)',
-    border: 'none',
-    cursor: isActive ? 'pointer' : 'default',
-    transition: 'all 200ms ease',
   }
 
   return (
@@ -167,7 +127,7 @@ export function OnbQualities() {
             aria-label="Назад"
             onClick={() => {
               haptic('light')
-              navigate('/onboarding/hobbies')
+              navigate('/onboarding/age')
             }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -187,24 +147,18 @@ export function OnbQualities() {
       </div>
 
       <div style={content}>
-        <h1 style={title}>что цените в людях?</h1>
-        <p style={sub}>выберите до {MAX_PICK}</p>
-        <div style={counter}>
-          {picked.length} / {MAX_PICK}
-        </div>
+        <h1 style={title}>чем занимаетесь?</h1>
+        <p style={sub}>выберите одно</p>
 
-        <div style={tagsWrap}>
-          {QUALITIES.map(({ emoji, label }) => {
-            const selected = picked.includes(label)
-            const disabled = !selected && picked.length >= MAX_PICK
-            const tagStyle: CSSProperties = {
+        <div style={optionsWrap}>
+          {INDUSTRIES.map(({ emoji, label }) => {
+            const selected = picked === label
+            const optStyle: CSSProperties = {
               ...sansStyle,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '10px 16px',
+              width: '100%',
+              height: 56,
               borderRadius: 99,
-              fontSize: 14,
+              fontSize: 15,
               fontWeight: 500,
               background: selected ? COLORS.ink : '#fff',
               color: selected ? COLORS.cream : COLORS.ink,
@@ -212,30 +166,20 @@ export function OnbQualities() {
                 ? '1.5px solid transparent'
                 : '1.5px solid rgba(26,22,18,0.10)',
               transition: 'all 200ms ease',
-              opacity: disabled ? 0.4 : 1,
-              cursor: disabled ? 'default' : 'pointer',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 10,
             }
             return (
-              <button
-                key={label}
-                style={tagStyle}
-                onClick={() => {
-                  if (disabled) return
-                  toggle(label)
-                }}
-              >
+              <button key={label} style={optStyle} onClick={() => pick(label)}>
                 <span aria-hidden="true">{emoji}</span>
                 <span>{label}</span>
               </button>
             )
           })}
         </div>
-      </div>
-
-      <div style={ctaWrap}>
-        <button style={ctaBtn} onClick={next} disabled={!isActive}>
-          {isActive ? 'дальше →' : 'выберите хотя бы одно'}
-        </button>
       </div>
     </div>
   )

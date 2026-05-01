@@ -4,8 +4,8 @@ import { COLORS, serifStyle, sansStyle } from '../../theme'
 import { Grain } from '../../components/Grain'
 import { haptic } from '../../lib/telegram'
 
-const STEP = 4
-const TOTAL = 4
+const STEP = 7
+const TOTAL = 7
 
 export function OnbDone() {
   const navigate = useNavigate()
@@ -151,7 +151,7 @@ export function OnbDone() {
             aria-label="Назад"
             onClick={() => {
               haptic('light')
-              navigate('/onboarding/gender')
+              navigate('/onboarding/qualities')
             }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
