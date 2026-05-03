@@ -199,46 +199,57 @@ export function HomeScreen() {
 
         {/* ── Category filter ── */}
         <div style={{
-          padding: '18px 0 4px',
           display: 'flex',
-          gap: 6,
+          gap: 0,
           overflowX: 'auto',
           scrollbarWidth: 'none',
           WebkitOverflowScrolling: 'touch',
           position: 'relative',
           zIndex: 2,
-          paddingLeft: 26,
-          paddingRight: 26,
+          paddingLeft: 22,
+          paddingRight: 22,
+          marginTop: 20,
+          marginBottom: 2,
+          borderBottom: '1px solid rgba(26,22,18,0.07)',
         }}>
           {CATEGORIES.map((cat) => {
             const isActive = activeCategory === cat.id
             return (
               <button
                 key={cat.id}
+                onClick={() => { haptic('light'); setActiveCategory(cat.id) }}
                 style={{
-                  ...sansStyle,
                   WebkitAppearance: 'none',
                   appearance: 'none',
-                  display: 'inline-flex',
+                  display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
-                  padding: '8px 15px',
-                  borderRadius: RADII.full,
-                  background: isActive ? COLORS.tomato : 'rgba(26,22,18,0.05)',
-                  color: isActive ? '#fff' : COLORS.inkSoft,
-                  WebkitTextFillColor: isActive ? '#fff' : COLORS.inkSoft,
-                  fontSize: 12,
-                  fontWeight: isActive ? 700 : 500,
-                  letterSpacing: isActive ? '0.01em' : '0',
+                  gap: 0,
+                  padding: '0 14px 0',
+                  paddingBottom: 10,
+                  background: 'none',
                   border: 'none',
+                  borderBottom: isActive
+                    ? `2px solid ${COLORS.tomato}`
+                    : '2px solid transparent',
+                  marginBottom: -1,
                   flexShrink: 0,
-                  transition: 'all 180ms cubic-bezier(0.22,1,0.36,1)',
-                  boxShadow: isActive ? '0 4px 14px rgba(232,71,44,0.30)' : 'none',
-                  transform: isActive ? 'scale(1.04)' : 'scale(1)',
                   cursor: 'pointer',
+                  transition: 'border-color 180ms ease, color 180ms ease',
                 }}
-                onClick={() => { haptic('light'); setActiveCategory(cat.id) }}
               >
-                {cat.label}
+                <span style={{
+                  ...sansStyle,
+                  fontSize: 13,
+                  fontWeight: isActive ? 700 : 400,
+                  color: isActive ? COLORS.tomato : 'rgba(26,22,18,0.42)',
+                  WebkitTextFillColor: isActive ? COLORS.tomato : 'rgba(26,22,18,0.42)',
+                  letterSpacing: isActive ? '-0.01em' : '0',
+                  transition: 'color 180ms ease, font-weight 180ms ease',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {cat.label}
+                </span>
               </button>
             )
           })}
