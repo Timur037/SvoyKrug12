@@ -264,25 +264,27 @@ export function CircleDetailScreen() {
             <div style={{ ...serifStyle, fontSize: 24, color: COLORS.cream, lineHeight: 1.1, marginBottom: 6 }}>
               {upcomingMeetup.title}
             </div>
-            <div style={{ ...sansStyle, fontSize: 13, color: 'rgba(245,239,230,0.60)', marginBottom: 14 }}>
+            <div style={{ ...sansStyle, fontSize: 13, color: 'rgba(245,239,230,0.60)', marginBottom: bookingId ? 14 : 0 }}>
               {upcomingMeetup.date_label} · место придёт за 4 часа
             </div>
-            <button
-              onClick={() => { haptic('light'); navigate('/chat') }}
-              style={{
-                ...sansStyle, width: '100%', padding: '12px 16px',
-                borderRadius: RADII.full, background: 'rgba(245,239,230,0.09)',
-                border: '1px solid rgba(245,239,230,0.14)', color: COLORS.cream,
-                fontSize: 13, fontWeight: 600,
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                cursor: 'pointer',
-              }}
-            >
-              <span>написать группе</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M5 12h14M13 6l6 6-6 6" stroke="rgba(245,239,230,0.55)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+            {bookingId && (
+              <button
+                onClick={() => { haptic('light'); navigate('/chat') }}
+                style={{
+                  ...sansStyle, width: '100%', padding: '12px 16px',
+                  borderRadius: RADII.full, background: 'rgba(245,239,230,0.09)',
+                  border: '1px solid rgba(245,239,230,0.14)', color: COLORS.cream,
+                  fontSize: 13, fontWeight: 600,
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  cursor: 'pointer',
+                }}
+              >
+                <span>написать группе</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M5 12h14M13 6l6 6-6 6" stroke="rgba(245,239,230,0.55)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            )}
           </div>
         )}
 

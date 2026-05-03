@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { COLORS, serifStyle, sansStyle } from '../theme'
 import { haptic } from '../lib/telegram'
+import { useUser } from '../context/UserContext'
+import { fetchUserBookings } from '../lib/db'
 
 type Message = {
   id: string
@@ -54,12 +56,24 @@ function nowHM(): string {
 
 export function GroupChatScreen() {
   const navigate = useNavigate()
+  const { user } = useUser()
   const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES)
   const [input, setInput] = useState('')
+  const [isBooked, setIsBooked] = useState<boolean | null>(null)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
 
   const title = useMemo(() => getCircleTitle(), [])
   const participantsCount = MOCK_PARTICIPANTS.length
+
+  useEffect(() => {
+    if (!user) return
+    fetchUserBookings(user.id)
+      .then((bookings) => {
+        const hasUpcoming = bookings.some((b) => b.meetup.status === 'upcoming')
+        setIsBooked(hasUpcoming)
+      })
+      .catch(() => setIsBooked(false))
+  }, [user])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -282,59 +296,94 @@ export function GroupChatScreen() {
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           borderTop: '1px solid rgba(245,239,230,0.08)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
         }}
       >
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="написать..."
-          style={{
-            flex: 1,
-            background: 'rgba(245,239,230,0.08)',
-            border: '1px solid rgba(245,239,230,0.12)',
-            borderRadius: 99,
-            padding: '10px 16px',
-            color: COLORS.cream,
-            ...sansStyle,
-            fontSize: 14,
-            outline: 'none',
-          }}
-        />
-        <button
-          onClick={handleSend}
-          disabled={!input.trim()}
-          aria-label="Отправить"
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            background: COLORS.tomato,
-            border: 'none',
+        {isBooked === false ? (
+          <div style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            cursor: input.trim() ? 'pointer' : 'default',
-            opacity: input.trim() ? 1 : 0.4,
-            flexShrink: 0,
-            transition: 'opacity 180ms ease',
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M3 12l18-9-7 18-3-7-8-2z"
-              stroke={COLORS.cream}
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
+            justifyContent: 'space-between',
+            gap: 12,
+          }}>
+            <div style={{
+              ...sansStyle,
+              fontSize: 13,
+              color: 'rgba(245,239,230,0.50)',
+              lineHeight: 1.35,
+            }}>
+              чат только для участников вечера
+            </div>
+            <button
+              onClick={() => { haptic('medium'); navigate('/home') }}
+              style={{
+                flexShrink: 0,
+                background: COLORS.tomato,
+                color: COLORS.cream,
+                border: 'none',
+                padding: '10px 16px',
+                borderRadius: 99,
+                ...sansStyle,
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              записаться →
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="написать..."
+              style={{
+                flex: 1,
+                background: 'rgba(245,239,230,0.08)',
+                border: '1px solid rgba(245,239,230,0.12)',
+                borderRadius: 99,
+                padding: '10px 16px',
+                color: COLORS.cream,
+                ...sansStyle,
+                fontSize: 14,
+                outline: 'none',
+              }}
             />
-          </svg>
-        </button>
+            <button
+              onClick={handleSend}
+              disabled={!input.trim()}
+              aria-label="Отправить"
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                background: COLORS.tomato,
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: input.trim() ? 'pointer' : 'default',
+                opacity: input.trim() ? 1 : 0.4,
+                flexShrink: 0,
+                transition: 'opacity 180ms ease',
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M3 12l18-9-7 18-3-7-8-2z"
+                  stroke={COLORS.cream}
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                />
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
 
       <style>{`
