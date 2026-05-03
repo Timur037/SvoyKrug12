@@ -13,13 +13,13 @@ import { MOCK_CIRCLES } from '../lib/mockCircles'
 import { useUser } from '../context/UserContext'
 
 const CATEGORIES = [
-  { id: 'all',      label: 'все',       emoji: '' },
-  { id: 'УЖИН',     label: 'ужин',      emoji: '🍽' },
-  { id: 'КОФЕ',     label: 'кофе',      emoji: '☕' },
-  { id: 'БРАНЧ',    label: 'бранч',     emoji: '🥐' },
-  { id: 'ПРОГУЛКА', label: 'прогулка',  emoji: '🌿' },
-  { id: 'НАСТОЛКИ', label: 'настолки',  emoji: '🎲' },
-  { id: 'ВЕЧЕР',    label: 'вечер',     emoji: '🕯' },
+  { id: 'all',      label: 'все' },
+  { id: 'УЖИН',     label: 'ужин' },
+  { id: 'КОФЕ',     label: 'кофе' },
+  { id: 'БРАНЧ',    label: 'бранч' },
+  { id: 'ПРОГУЛКА', label: 'прогулка' },
+  { id: 'НАСТОЛКИ', label: 'настолки' },
+  { id: 'ВЕЧЕР',    label: 'вечер' },
 ] as const
 
 type GreetingPart = { lead: string; name: string }
@@ -201,9 +201,10 @@ export function HomeScreen() {
         <div style={{
           padding: '18px 0 4px',
           display: 'flex',
-          gap: 8,
+          gap: 6,
           overflowX: 'auto',
           scrollbarWidth: 'none',
+          WebkitOverflowScrolling: 'touch',
           position: 'relative',
           zIndex: 2,
           paddingLeft: 26,
@@ -220,25 +221,23 @@ export function HomeScreen() {
                   appearance: 'none',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 6,
-                  padding: '9px 16px',
+                  padding: '8px 15px',
                   borderRadius: RADII.full,
-                  background: isActive ? COLORS.ink : COLORS.white,
-                  color: isActive ? COLORS.cream : COLORS.ink,
-                  WebkitTextFillColor: isActive ? COLORS.cream : COLORS.ink,
-                  fontSize: 13,
-                  fontWeight: 600,
-                  letterSpacing: '-0.02em',
-                  border: isActive ? '1.5px solid transparent' : `1.5px solid rgba(26,22,18,0.09)`,
+                  background: isActive ? COLORS.tomato : 'rgba(26,22,18,0.05)',
+                  color: isActive ? '#fff' : COLORS.inkSoft,
+                  WebkitTextFillColor: isActive ? '#fff' : COLORS.inkSoft,
+                  fontSize: 12,
+                  fontWeight: isActive ? 700 : 500,
+                  letterSpacing: isActive ? '0.01em' : '0',
+                  border: 'none',
                   flexShrink: 0,
-                  transition: 'all 200ms cubic-bezier(0.22,1,0.36,1)',
-                  boxShadow: isActive ? '0 4px 14px rgba(26,22,18,0.20)' : SHADOWS.chip,
-                  transform: isActive ? 'scale(1.03)' : 'scale(1)',
+                  transition: 'all 180ms cubic-bezier(0.22,1,0.36,1)',
+                  boxShadow: isActive ? '0 4px 14px rgba(232,71,44,0.30)' : 'none',
+                  transform: isActive ? 'scale(1.04)' : 'scale(1)',
                   cursor: 'pointer',
                 }}
                 onClick={() => { haptic('light'); setActiveCategory(cat.id) }}
               >
-                {cat.emoji && <span aria-hidden="true" style={{ fontSize: 14 }}>{cat.emoji}</span>}
                 {cat.label}
               </button>
             )
