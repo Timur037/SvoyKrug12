@@ -13,14 +13,14 @@ import { MOCK_CIRCLES } from '../lib/mockCircles'
 import { useUser } from '../context/UserContext'
 
 const CATEGORIES = [
-  { id: 'all',      label: 'все' },
-  { id: 'УЖИН',     label: 'ужин' },
-  { id: 'КОФЕ',     label: 'кофе' },
-  { id: 'БРАНЧ',    label: 'бранч' },
-  { id: 'ПРОГУЛКА', label: 'прогулка' },
-  { id: 'НАСТОЛКИ', label: 'настолки' },
-  { id: 'ВЕЧЕР',    label: 'вечер' },
-] as const
+  { id: 'all',       label: 'все',       clr: '26,22,18'   },
+  { id: 'УЖИН',      label: 'ужин',      clr: '232,71,44'  },
+  { id: 'КОФЕ',      label: 'кофе',      clr: '178,112,44' },
+  { id: 'БРАНЧ',     label: 'бранч',     clr: '196,152,32' },
+  { id: 'ПРОГУЛКА',  label: 'прогулка',  clr: '45,102,71'  },
+  { id: 'НАСТОЛКИ',  label: 'настолки',  clr: '118,82,152' },
+  { id: 'ВЕЧЕР',     label: 'вечер',     clr: '152,76,38'  },
+]
 
 type GreetingPart = { lead: string; name: string }
 
@@ -200,7 +200,7 @@ export function HomeScreen() {
         {/* ── Category filter ── */}
         <div style={{
           display: 'flex',
-          gap: 0,
+          gap: 6,
           overflowX: 'auto',
           scrollbarWidth: 'none',
           WebkitOverflowScrolling: 'touch',
@@ -208,12 +208,12 @@ export function HomeScreen() {
           zIndex: 2,
           paddingLeft: 22,
           paddingRight: 22,
-          marginTop: 20,
-          marginBottom: 2,
-          borderBottom: '1px solid rgba(26,22,18,0.07)',
+          marginTop: 18,
+          marginBottom: 4,
         }}>
           {CATEGORIES.map((cat) => {
             const isActive = activeCategory === cat.id
+            const rgb = cat.clr
             return (
               <button
                 key={cat.id}
@@ -221,32 +221,36 @@ export function HomeScreen() {
                 style={{
                   WebkitAppearance: 'none',
                   appearance: 'none',
-                  display: 'flex',
-                  flexDirection: 'column',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 0,
-                  padding: '0 14px 0',
-                  paddingBottom: 10,
-                  background: 'none',
-                  border: 'none',
-                  borderBottom: isActive
-                    ? `2px solid ${COLORS.tomato}`
-                    : '2px solid transparent',
-                  marginBottom: -1,
+                  gap: 6,
+                  padding: '7px 13px',
+                  borderRadius: RADII.full,
+                  background: isActive ? `rgba(${rgb},0.10)` : 'rgba(26,22,18,0.04)',
+                  border: `1.5px solid ${isActive ? `rgba(${rgb},0.28)` : 'transparent'}`,
                   flexShrink: 0,
                   cursor: 'pointer',
-                  transition: 'border-color 180ms ease, color 180ms ease',
+                  transition: 'all 200ms cubic-bezier(0.22,1,0.36,1)',
+                  transform: isActive ? 'scale(1.03)' : 'scale(1)',
                 }}
               >
+                <span style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: '50%',
+                  flexShrink: 0,
+                  background: isActive ? `rgb(${rgb})` : 'rgba(26,22,18,0.18)',
+                  transition: 'background 200ms',
+                }} />
                 <span style={{
                   ...sansStyle,
                   fontSize: 13,
                   fontWeight: isActive ? 700 : 400,
-                  color: isActive ? COLORS.tomato : 'rgba(26,22,18,0.42)',
-                  WebkitTextFillColor: isActive ? COLORS.tomato : 'rgba(26,22,18,0.42)',
-                  letterSpacing: isActive ? '-0.01em' : '0',
-                  transition: 'color 180ms ease, font-weight 180ms ease',
+                  color: isActive ? `rgb(${rgb})` : 'rgba(26,22,18,0.45)',
+                  WebkitTextFillColor: isActive ? `rgb(${rgb})` : 'rgba(26,22,18,0.45)',
                   whiteSpace: 'nowrap',
+                  transition: 'color 200ms',
+                  letterSpacing: '-0.01em',
                 }}>
                   {cat.label}
                 </span>
