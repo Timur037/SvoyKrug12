@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, type CSSProperties } from 'react'
-import { COLORS, serifStyle, sansStyle } from '../theme'
+import { COLORS, RADII, serifStyle, sansStyle } from '../theme'
 import { Grain } from '../components/Grain'
 import { TabBar } from '../components/TabBar'
 import { PageTransition } from '../components/PageTransition'
@@ -219,6 +219,7 @@ export function ProfileScreen() {
   })
 
   const [activeSheet, setActiveSheet] = useState<'districts' | 'weekdays' | null>(null)
+  const [districtSearch, setDistrictSearch] = useState('')
 
   function updateSettings(patch: Partial<SettingsState>) {
     const next = { ...settings, ...patch }
@@ -729,7 +730,7 @@ export function ProfileScreen() {
       {/* Bottom sheet overlay */}
       {activeSheet && (
         <div
-          onClick={() => setActiveSheet(null)}
+          onClick={() => { setActiveSheet(null); setDistrictSearch('') }}
           style={{
             position: 'fixed', inset: 0, zIndex: 50,
             background: 'rgba(26,22,18,0.45)',
@@ -775,11 +776,35 @@ export function ProfileScreen() {
               }}
             >×</button>
           </div>
-          <div style={{ ...sansStyle, fontSize: 13, color: COLORS.inkSoft, marginBottom: 18, lineHeight: 1.4 }}>
+          <div style={{ ...sansStyle, fontSize: 13, color: COLORS.inkSoft, marginBottom: 14, lineHeight: 1.4 }}>
             выберите районы, где вам удобно встречаться
           </div>
+          <div style={{ position: 'relative', marginBottom: 16 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+              <circle cx="11" cy="11" r="7" stroke="rgba(26,22,18,0.35)" strokeWidth="1.8"/>
+              <path d="M16.5 16.5l3 3" stroke="rgba(26,22,18,0.35)" strokeWidth="1.8" strokeLinecap="round"/>
+            </svg>
+            <input
+              type="text"
+              value={districtSearch}
+              onChange={e => setDistrictSearch(e.target.value)}
+              placeholder="поиск района..."
+              style={{
+                ...sansStyle,
+                width: '100%',
+                padding: '10px 12px 10px 36px',
+                borderRadius: RADII.full,
+                border: '1.5px solid rgba(26,22,18,0.10)',
+                background: 'rgba(26,22,18,0.04)',
+                fontSize: 14,
+                color: COLORS.ink,
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 18 }}>
-            {AVAILABLE_DISTRICTS.map((d) => {
+            {AVAILABLE_DISTRICTS.filter(d => d.toLowerCase().includes(districtSearch.toLowerCase())).map((d) => {
               const selected = settings.districts.includes(d)
               return (
                 <button
