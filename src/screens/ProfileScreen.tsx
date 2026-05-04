@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, type CSSProperties } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { COLORS, RADII, serifStyle, sansStyle } from '../theme'
 import { Grain } from '../components/Grain'
 import { TabBar } from '../components/TabBar'
@@ -203,6 +204,7 @@ const VIBE_GROUPS: VibeGroup[] = [
 
 
 export function ProfileScreen() {
+  const navigate = useNavigate()
   const { user } = useUser()
   const [tags, setTags] = useState<VibeTag[]>(VIBE_TAGS)
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -404,37 +406,49 @@ export function ProfileScreen() {
 
         {/* Next evening mini card */}
         {nextEvent ? (
-          <div style={{
-            margin: '0 22px 22px',
-            padding: '16px 18px',
-            borderRadius: 20,
-            background: '#fff',
-            border: '1px solid rgba(26,22,18,0.06)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}>
+          <button
+            onClick={() => {
+              haptic('medium')
+              const circleId = profile?.upcomingBooking?.meetup.circle_id
+              if (circleId) {
+                try { localStorage.setItem('svoy_krug_last_circle', circleId) } catch { /* ignore */ }
+              }
+              navigate('/circle')
+            }}
+            style={{
+              margin: '0 22px 22px',
+              padding: '16px 18px',
+              borderRadius: 20,
+              background: '#fff',
+              border: '1px solid rgba(26,22,18,0.06)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: 'calc(100% - 44px)',
+              textAlign: 'left',
+              cursor: 'pointer',
+              boxShadow: '0 2px 12px rgba(26,22,18,0.06)',
+              transition: 'box-shadow 180ms ease, transform 180ms ease',
+            }}
+          >
             <div>
               <div style={{ ...sansStyle, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: COLORS.inkSoft, textTransform: 'uppercase' }}>следующий вечер</div>
               <div style={{ ...serifStyle, fontSize: 20, color: COLORS.ink, marginTop: 4 }}>{nextEvent.label}</div>
               <div style={{ ...sansStyle, fontSize: 12, color: COLORS.inkSoft, marginTop: 2 }}>{nextEvent.place} — {nextEvent.seats} человек</div>
             </div>
-            <div style={{
-              width: 40,
-              height: 40,
-              borderRadius: '50%',
-              background: COLORS.tomato,
-              color: COLORS.cream,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              ...sansStyle,
-              fontWeight: 700,
-              fontSize: 18,
-              boxShadow: '0 4px 12px rgba(232,71,44,0.35)',
-              flexShrink: 0,
-            }}>{nextEvent.seats}</div>
-          </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+              <div style={{
+                width: 40, height: 40, borderRadius: '50%',
+                background: COLORS.tomato, color: COLORS.cream,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                ...sansStyle, fontWeight: 700, fontSize: 18,
+                boxShadow: '0 4px 12px rgba(232,71,44,0.35)',
+              }}>{nextEvent.seats}</div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12h14M13 6l6 6-6 6" stroke="rgba(26,22,18,0.30)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+          </button>
         ) : totalEvents === 0 ? (
           <div style={{
             margin: '0 22px 22px',
