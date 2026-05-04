@@ -8,23 +8,26 @@ import { haptic } from '../lib/telegram'
 import { useUser } from '../context/UserContext'
 import { fetchUserProfile, type UserProfile } from '../lib/db'
 
-function useCountUp(target: number, duration = 900, delay = 0): number {
+function useCountUp(target: number, duration = 1400, delay = 0): number {
   const [val, setVal] = useState(0)
   const rafRef = useRef<number | null>(null)
   useEffect(() => {
     if (target === 0) { setVal(0); return }
-    const timeout = setTimeout(() => {
+    let timeoutId: ReturnType<typeof setTimeout>
+    timeoutId = setTimeout(() => {
       const start = Date.now()
       const tick = () => {
         const t = Math.min((Date.now() - start) / duration, 1)
-        const eased = 1 - Math.pow(1 - t, 3)
-        setVal(Math.round(eased * target))
+        // elastic ease-out: overshoots slightly then settles
+        const eased = t === 1 ? 1 : 1 - Math.pow(2, -10 * t) * Math.cos((t * duration - 75) / 300 * Math.PI)
+        setVal(Math.round(Math.min(eased, 1) * target))
         if (t < 1) rafRef.current = requestAnimationFrame(tick)
+        else setVal(target)
       }
       rafRef.current = requestAnimationFrame(tick)
     }, delay)
     return () => {
-      clearTimeout(timeout)
+      clearTimeout(timeoutId)
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
   }, [target, duration, delay])
@@ -306,13 +309,19 @@ export function ProfileScreen() {
   const peopleMet = totalEvents * 5
   const places = profile?.uniquePlaces ?? 0
 
-  const animatedEvents  = useCountUp(totalEvents, 800, 200)
-  const animatedPeople  = useCountUp(peopleMet,   800, 350)
-  const animatedPlaces  = useCountUp(places,       800, 500)
+  const animatedEvents  = useCountUp(totalEvents, 1400, 250)
+  const animatedPeople  = useCountUp(peopleMet,   1400, 550)
+  const animatedPlaces  = useCountUp(places,       1400, 850)
 
   return (
     <PageTransition>
     <div style={root}>
+      <style>{`
+        @keyframes fadeSlideUp {
+          from { opacity: 0; transform: translateY(14px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
       <Grain opacity={0.3} />
       <div style={{ paddingTop: 64, paddingBottom: 110 }}>
 
@@ -374,18 +383,19 @@ export function ProfileScreen() {
           <Grain opacity={0.3} />
           <div style={{ position: 'relative', zIndex: 2, display: 'flex', justifyContent: 'space-between', gap: 8 }}>
             {[
-              { n: animatedEvents,  label: 'вечеров',        accent: true  },
-              { n: animatedPeople,  label: 'людей встречено', accent: false },
-              { n: animatedPlaces,  label: 'мест в Москве',   accent: false },
+              { n: animatedEvents,  label: 'вечеров',        accent: true,  delay: 250  },
+              { n: animatedPeople,  label: 'людей встречено', accent: false, delay: 550  },
+              { n: animatedPlaces,  label: 'мест в Москве',   accent: false, delay: 850  },
             ].map((s) => (
-              <div key={s.label} style={{ animation: 'countUp 500ms cubic-bezier(0.22,1,0.36,1) both' }}>
+              <div key={s.label} style={{ animation: `fadeSlideUp 600ms cubic-bezier(0.22,1,0.36,1) ${s.delay}ms both` }}>
                 <div style={{
                   ...serifStyle,
-                  fontSize: 48,
+                  fontSize: 52,
                   lineHeight: 1,
                   color: s.accent ? COLORS.tomato : COLORS.cream,
                   fontVariantNumeric: 'tabular-nums',
-                  letterSpacing: '-0.02em',
+                  letterSpacing: '-0.03em',
+                  minWidth: 40,
                 }}>
                   {s.n}
                 </div>
