@@ -27,15 +27,18 @@ function getWeekDays(today: Date): WeekDay[] {
   })
 }
 
+function isSameDay(a: Date, b: Date): boolean {
+  return a.getDate() === b.getDate() &&
+    a.getMonth() === b.getMonth() &&
+    a.getFullYear() === b.getFullYear()
+}
+
 function markHotDays(week: WeekDay[], upcoming: DbMeetup | null): WeekDay[] {
   if (!upcoming?.scheduled_at) return week
   const meetupDate = new Date(upcoming.scheduled_at)
   return week.map((day) => ({
     ...day,
-    hot:
-      day.fullDate.getDate() === meetupDate.getDate() &&
-      day.fullDate.getMonth() === meetupDate.getMonth() &&
-      day.fullDate.getFullYear() === meetupDate.getFullYear(),
+    hot: isSameDay(day.fullDate, meetupDate),
   }))
 }
 
@@ -44,6 +47,11 @@ export function CalendarScreen() {
   const { user } = useUser()
   const [upcoming, setUpcoming] = useState<DbMeetup | null>(null)
   const [past, setPast] = useState<DbMeetup[]>([])
+  const [selectedDay, setSelectedDay] = useState<Date>(() => {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    return d
+  })
   const today = new Date()
   const baseWeek = getWeekDays(today)
   const week = markHotDays(baseWeek, upcoming)
@@ -68,6 +76,16 @@ export function CalendarScreen() {
     try { localStorage.setItem('svoy_krug_review_meetup', m.id) } catch { /* ignore */ }
     navigate('/post-event')
   }
+
+  function meetupOnDay(date: Date): DbMeetup | null {
+    if (upcoming?.scheduled_at && isSameDay(new Date(upcoming.scheduled_at), date)) return upcoming
+    return past.find((p) => p.scheduled_at && isSameDay(new Date(p.scheduled_at), date)) ?? null
+  }
+
+  const selectedMeetup = meetupOnDay(selectedDay)
+  const isSelectedUpcoming = selectedMeetup?.status === 'upcoming'
+  const isSelectedPast = selectedMeetup?.status === 'past'
+  const selectedDayLabel = selectedDay.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })
 
   return (
     <PageTransition>
@@ -119,12 +137,28 @@ export function CalendarScreen() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
               {week.map((d) => {
-                const isToday = d.fullDate.toDateString() === today.toDateString()
+                const isToday = isSameDay(d.fullDate, today)
+                const isSelected = isSameDay(d.fullDate, selectedDay)
+                const hasPastMeetup = past.some((p) => p.scheduled_at && isSameDay(new Date(p.scheduled_at), d.fullDate))
+                const bg = d.hot
+                  ? COLORS.tomato
+                  : isSelected
+                    ? COLORS.ink
+                    : hasPastMeetup
+                      ? 'rgba(244,201,93,0.22)'
+                      : isToday
+                        ? COLORS.cream2
+                        : 'transparent'
+                const fg = d.hot
+                  ? COLORS.cream
+                  : isSelected
+                    ? COLORS.cream
+                    : COLORS.ink
                 return (
                   <button
                     key={d.n}
-                    style={{ textAlign: 'center', background: 'transparent', border: 'none', padding: '2px 0', cursor: d.hot ? 'pointer' : 'default' }}
-                    onClick={() => { if (d.hot) { haptic('light'); navigate('/group') } }}
+                    style={{ textAlign: 'center', background: 'transparent', border: 'none', padding: '2px 0', cursor: 'pointer' }}
+                    onClick={() => { haptic('light'); setSelectedDay(d.fullDate) }}
                   >
                     <div style={{ ...sansStyle, fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: d.hot ? COLORS.tomato : isToday ? COLORS.tomato : COLORS.inkSoft }}>
                       {d.d}
@@ -135,9 +169,9 @@ export function CalendarScreen() {
                       textAlign: 'center', borderRadius: RADII.full,
                       ...sansStyle, fontSize: 14, fontWeight: 700,
                       marginInline: 'auto', fontVariantNumeric: 'tabular-nums',
-                      background: d.hot ? COLORS.tomato : isToday ? COLORS.cream2 : 'transparent',
-                      color: d.hot ? COLORS.cream : COLORS.ink,
-                      border: isToday && !d.hot ? `1.5px solid ${COLORS.tomato}` : 'none',
+                      background: bg,
+                      color: fg,
+                      border: isToday && !d.hot && !isSelected ? `1.5px solid ${COLORS.tomato}` : 'none',
                       boxShadow: d.hot ? '0 4px 12px rgba(232,71,44,0.35)' : 'none',
                     }}>
                       {d.n}
@@ -149,10 +183,12 @@ export function CalendarScreen() {
             </div>
           </div>
 
-          {/* Upcoming */}
-          {upcoming ? (
-            <div style={{ padding: '0 18px 8px' }}>
-              <span style={{ ...overlineStyle, color: COLORS.tomato, display: 'block', marginBottom: 14 }}>ваш ближайший круг</span>
+          {/* Selected day */}
+          <div style={{ padding: '0 18px 8px' }}>
+            <span style={{ ...overlineStyle, color: isSelectedUpcoming ? COLORS.tomato : COLORS.inkSoft, display: 'block', marginBottom: 14 }}>
+              {selectedDayLabel}
+            </span>
+            {selectedMeetup ? (
               <button
                 style={{
                   display: 'block', width: '100%',
@@ -164,52 +200,47 @@ export function CalendarScreen() {
                 }}
                 onClick={() => {
                   haptic('medium')
-                  if (upcoming?.circle_id) {
-                    try { localStorage.setItem('svoy_krug_last_circle', upcoming.circle_id) } catch { /* ignore */ }
+                  if (isSelectedPast) {
+                    openPastMeetup(selectedMeetup)
+                    return
+                  }
+                  if (selectedMeetup.circle_id) {
+                    try { localStorage.setItem('svoy_krug_last_circle', selectedMeetup.circle_id) } catch { /* ignore */ }
                   }
                   navigate('/circle')
                 }}
               >
-                {upcoming.photo && (
+                {selectedMeetup.photo && (
                   <div style={{ position: 'relative', height: 130, overflow: 'hidden' }}>
-                    <img src={upcoming.photo} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.80)' }} />
+                    <img src={selectedMeetup.photo} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.80)' }} />
                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 20%, rgba(26,22,18,0.88) 100%)' }} />
                   </div>
                 )}
                 <div style={{ padding: '20px 22px 22px', position: 'relative' }}>
                   <Grain opacity={0.15} />
                   <div style={{ position: 'relative', zIndex: 2 }}>
-                    <div style={{ ...overlineStyle, color: 'rgba(245,239,230,0.55)', marginBottom: 8 }}>{upcoming.date_label}</div>
-                    <div style={{ ...serifStyle, fontSize: 28, lineHeight: 1.05, color: COLORS.cream, marginBottom: 4 }}>{upcoming.title}</div>
+                    <div style={{ ...overlineStyle, color: 'rgba(245,239,230,0.55)', marginBottom: 8 }}>{selectedMeetup.date_label}</div>
+                    <div style={{ ...serifStyle, fontSize: 28, lineHeight: 1.05, color: COLORS.cream, marginBottom: 4 }}>{selectedMeetup.title}</div>
                     <div style={{ ...sansStyle, fontSize: 12, color: 'rgba(245,239,230,0.45)', marginBottom: 16 }}>📍 место — за 4 часа до встречи</div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Seats taken={upcoming.taken} total={upcoming.seats} dark />
-                      <span style={{ ...sansStyle, background: COLORS.tomato, color: COLORS.cream, padding: '10px 18px', borderRadius: RADII.full, fontSize: 13, fontWeight: 700, boxShadow: SHADOWS.cta }}>
-                        детали →
+                      <Seats taken={selectedMeetup.taken} total={selectedMeetup.seats} dark />
+                      <span style={{ ...sansStyle, background: isSelectedPast ? COLORS.honey : COLORS.tomato, color: isSelectedPast ? COLORS.ink : COLORS.cream, padding: '10px 18px', borderRadius: RADII.full, fontSize: 13, fontWeight: 700, boxShadow: SHADOWS.cta }}>
+                        {isSelectedPast ? 'оценить →' : 'детали →'}
                       </span>
                     </div>
                   </div>
                 </div>
               </button>
-            </div>
-          ) : (
-            <div style={{ padding: '0 18px 24px' }}>
-              <div style={{
-                padding: '28px 22px', borderRadius: RADII.xl,
-                background: COLORS.white, border: '1px solid rgba(26,22,18,0.06)',
-                boxShadow: SHADOWS.panel, textAlign: 'center',
-              }}>
-                <div style={{ ...serifStyle, fontSize: 24, color: COLORS.ink, marginBottom: 8 }}>вечеров пока нет</div>
-                <div style={{ ...sansStyle, fontSize: 13, color: COLORS.inkSoft, marginBottom: 18 }}>загляните на главную и найдите свой круг</div>
-                <button
-                  onClick={() => { haptic('light'); navigate('/home') }}
-                  style={{ ...sansStyle, background: COLORS.ink, color: COLORS.cream, padding: '12px 22px', borderRadius: RADII.full, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-                >
+            ) : (
+              <div style={{ padding: '28px 22px', borderRadius: RADII.xl, background: COLORS.white, border: '1px solid rgba(26,22,18,0.06)', boxShadow: SHADOWS.panel, textAlign: 'center' }}>
+                <div style={{ ...serifStyle, fontSize: 22, color: COLORS.ink, marginBottom: 8 }}>в этот день нет круга</div>
+                <div style={{ ...sansStyle, fontSize: 13, color: COLORS.inkSoft, marginBottom: 18 }}>запишитесь на другой вечер</div>
+                <button onClick={() => { haptic('light'); navigate('/home') }} style={{ ...sansStyle, background: COLORS.ink, color: COLORS.cream, padding: '12px 22px', borderRadius: RADII.full, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                   найти круг →
                 </button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Past */}
           {past.length > 0 && (
