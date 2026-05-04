@@ -173,9 +173,9 @@ export async function fetchUserProfile(userId: string): Promise<UserProfile> {
   const bookings = await fetchUserBookings(userId)
   const upcoming = bookings.find((b) => b.meetup.status === 'upcoming') ?? null
   const past = bookings.filter((b) => b.meetup.status === 'past')
-  const uniquePlaces = new Set(bookings.map((b) => b.meetup.place)).size
+  const uniquePlaces = new Set(past.map((b) => b.meetup.place)).size
   return {
-    totalBookings: bookings.length,
+    totalBookings: past.length,
     pastBookings: past.length,
     uniquePlaces,
     upcomingBooking: upcoming,
