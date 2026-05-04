@@ -19,7 +19,6 @@ const CATEGORIES = [
   { id: 'БРАНЧ',     label: 'бранч',     clr: '196,152,32' },
   { id: 'ПРОГУЛКА',  label: 'прогулка',  clr: '45,102,71'  },
   { id: 'НАСТОЛКИ',  label: 'настолки',  clr: '118,82,152' },
-  { id: 'ВЕЧЕР',     label: 'вечер',     clr: '152,76,38'  },
 ]
 
 type GreetingPart = { lead: string; name: string }
