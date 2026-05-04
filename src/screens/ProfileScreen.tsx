@@ -56,12 +56,22 @@ const VIBE_TAGS: VibeTag[] = [
   { t: 'один раз в неделю — хватит', size: 16, rot:  2, kind: 'tomato' },
 ]
 
-const SETTINGS = [
-  { l: 'только дружба', v: 'включено', tomato: true },
-  { l: 'районы города', v: 'центр, замоскворечье' },
-  { l: 'дни недели', v: 'чт · пт · сб' },
-  { l: 'пауза', v: 'выключена' },
-] as const
+const AVAILABLE_DISTRICTS = ['центр', 'замоскворечье', 'арбат', 'хамовники', 'пресня', 'таганка', 'басманный', 'сокольники', 'дорогомилово', 'митино']
+const AVAILABLE_WEEKDAYS = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс']
+
+interface SettingsState {
+  onlyFriendship: boolean
+  districts: string[]
+  weekdays: string[]
+  paused: boolean
+}
+
+const DEFAULT_SETTINGS: SettingsState = {
+  onlyFriendship: true,
+  districts: ['центр', 'замоскворечье'],
+  weekdays: ['чт', 'пт', 'сб'],
+  paused: false,
+}
 
 function palette(k: StickerKind): { bg: string; c: string; br: string; shadow: string } {
   switch (k) {
@@ -192,6 +202,44 @@ export function ProfileScreen() {
   const [tags, setTags] = useState<VibeTag[]>(VIBE_TAGS)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [showPicker, setShowPicker] = useState(false)
+
+  const [settings, setSettings] = useState<SettingsState>(() => {
+    try {
+      const saved = localStorage.getItem('svoy_krug_settings')
+      if (saved) return JSON.parse(saved) as SettingsState
+    } catch {
+      // ignore parse/storage errors and fall back to defaults
+    }
+    return DEFAULT_SETTINGS
+  })
+
+  const [activeSheet, setActiveSheet] = useState<'districts' | 'weekdays' | null>(null)
+
+  function updateSettings(patch: Partial<SettingsState>) {
+    const next = { ...settings, ...patch }
+    setSettings(next)
+    try {
+      localStorage.setItem('svoy_krug_settings', JSON.stringify(next))
+    } catch {
+      // ignore storage write errors (private mode, quota, etc.)
+    }
+  }
+
+  function toggleDistrict(d: string) {
+    haptic('light')
+    const has = settings.districts.includes(d)
+    updateSettings({
+      districts: has ? settings.districts.filter((x) => x !== d) : [...settings.districts, d],
+    })
+  }
+
+  function toggleWeekday(d: string) {
+    haptic('light')
+    const has = settings.weekdays.includes(d)
+    updateSettings({
+      weekdays: has ? settings.weekdays.filter((x) => x !== d) : [...settings.weekdays, d],
+    })
+  }
 
   useEffect(() => {
     if (!user) return
@@ -488,11 +536,60 @@ export function ProfileScreen() {
             настройки
           </div>
           <div style={{ background: '#fff', borderRadius: 20, border: '1px solid rgba(26,22,18,0.06)', overflow: 'hidden', boxShadow: '0 2px 12px rgba(26,22,18,0.05)' }}>
-            {SETTINGS.map((row, i) => {
-              const isTomato = 'tomato' in row && row.tomato
-              return (
+            {(() => {
+              const rows: Array<{
+                key: string
+                label: string
+                value: string
+                tomato: boolean
+                hint?: string
+                onTap: () => void
+              }> = [
+                {
+                  key: 'onlyFriendship',
+                  label: 'только дружба',
+                  value: settings.onlyFriendship ? 'включено' : 'выключено',
+                  tomato: settings.onlyFriendship,
+                  onTap: () => {
+                    haptic('light')
+                    updateSettings({ onlyFriendship: !settings.onlyFriendship })
+                  },
+                },
+                {
+                  key: 'districts',
+                  label: 'районы города',
+                  value: settings.districts.length > 0 ? settings.districts.join(', ') : 'не выбраны',
+                  tomato: false,
+                  onTap: () => {
+                    haptic('light')
+                    setActiveSheet('districts')
+                  },
+                },
+                {
+                  key: 'weekdays',
+                  label: 'дни недели',
+                  value: settings.weekdays.length > 0 ? settings.weekdays.join(' · ') : 'не выбраны',
+                  tomato: false,
+                  onTap: () => {
+                    haptic('light')
+                    setActiveSheet('weekdays')
+                  },
+                },
+                {
+                  key: 'paused',
+                  label: 'пауза',
+                  value: settings.paused ? 'включена' : 'выключена',
+                  tomato: settings.paused,
+                  hint: settings.paused ? 'пауза останавливает подбор новых кругов' : undefined,
+                  onTap: () => {
+                    haptic('light')
+                    updateSettings({ paused: !settings.paused })
+                  },
+                },
+              ]
+              return rows.map((row, i) => (
                 <button
-                  key={row.l}
+                  key={row.key}
                   style={{
                     padding: '15px 18px',
                     borderTop: i === 0 ? 'none' : '1px solid rgba(26,22,18,0.06)',
@@ -509,20 +606,35 @@ export function ProfileScreen() {
                     cursor: 'pointer',
                     gap: 12,
                   }}
-                  onClick={() => haptic('light')}
+                  onClick={row.onTap}
                 >
-                  <span style={{ ...sansStyle, fontSize: 14, fontWeight: 500, color: COLORS.ink }}>{row.l}</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                    <span style={{ ...sansStyle, fontSize: 13, fontWeight: 600, color: isTomato ? COLORS.tomato : COLORS.inkSoft }}>
-                      {row.v}
+                  <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                    <span style={{ ...sansStyle, fontSize: 14, fontWeight: 500, color: COLORS.ink }}>{row.label}</span>
+                    {row.hint && (
+                      <span style={{ ...sansStyle, fontSize: 11, color: COLORS.inkSoft, lineHeight: 1.3 }}>
+                        {row.hint}
+                      </span>
+                    )}
+                  </span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, maxWidth: '60%' }}>
+                    <span style={{
+                      ...sansStyle,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: row.tomato ? COLORS.tomato : COLORS.inkSoft,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {row.value}
                     </span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M9 6l6 6-6 6" stroke={isTomato ? COLORS.tomato : 'rgba(26,22,18,0.3)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M9 6l6 6-6 6" stroke={row.tomato ? COLORS.tomato : 'rgba(26,22,18,0.3)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </span>
                 </button>
-              )
-            })}
+              ))
+            })()}
           </div>
         </div>
       </div>
@@ -607,6 +719,201 @@ export function ProfileScreen() {
             })}
           </div>
         </>
+      )}
+
+      {/* Bottom sheet overlay */}
+      {activeSheet && (
+        <div
+          onClick={() => setActiveSheet(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 50,
+            background: 'rgba(26,22,18,0.45)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+          }}
+        />
+      )}
+
+      {/* Districts bottom sheet */}
+      {activeSheet === 'districts' && (
+        <div style={{
+          position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 51,
+          background: '#fff',
+          borderRadius: '24px 24px 0 0',
+          padding: '20px 24px calc(env(safe-area-inset-bottom,0px) + 24px)',
+          boxShadow: '0 -8px 40px rgba(26,22,18,0.18)',
+          maxHeight: '78dvh',
+          overflowY: 'auto',
+          transform: 'translateY(0)',
+          transition: 'transform 300ms cubic-bezier(0.22,1,0.36,1)',
+          animation: 'sheetUp 300ms cubic-bezier(0.22,1,0.36,1) both',
+        }}>
+          <style>{`@keyframes sheetUp { from{transform:translateY(100%)} to{transform:translateY(0)} }`}</style>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(26,22,18,0.15)', margin: '0 auto 18px' }} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <div style={{ ...sansStyle, fontSize: 20, fontWeight: 700, color: COLORS.ink }}>районы города</div>
+            <button
+              onClick={() => { haptic('light'); setActiveSheet(null) }}
+              aria-label="закрыть"
+              style={{
+                width: 32, height: 32, borderRadius: '50%',
+                background: 'rgba(26,22,18,0.06)',
+                border: 'none',
+                ...sansStyle,
+                fontSize: 18,
+                color: COLORS.ink,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                lineHeight: 1,
+              }}
+            >×</button>
+          </div>
+          <div style={{ ...sansStyle, fontSize: 13, color: COLORS.inkSoft, marginBottom: 18, lineHeight: 1.4 }}>
+            выберите районы, где вам удобно встречаться
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 18 }}>
+            {AVAILABLE_DISTRICTS.map((d) => {
+              const selected = settings.districts.includes(d)
+              return (
+                <button
+                  key={d}
+                  onClick={() => toggleDistrict(d)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '12px 4px',
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom: 'none',
+                    cursor: 'pointer',
+                    width: '100%',
+                    textAlign: 'left',
+                  }}
+                >
+                  <div style={{
+                    width: 22, height: 22, borderRadius: '50%',
+                    background: selected ? COLORS.tomato : 'transparent',
+                    border: selected ? `2px solid ${COLORS.tomato}` : '2px solid rgba(26,22,18,0.20)',
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 180ms ease',
+                  }}>
+                    {selected && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 12l5 5 9-11" stroke={COLORS.cream} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </div>
+                  <span style={{ ...sansStyle, fontSize: 15, fontWeight: 500, color: COLORS.ink }}>{d}</span>
+                </button>
+              )
+            })}
+          </div>
+          <button
+            onClick={() => { haptic('light'); setActiveSheet(null) }}
+            style={{
+              width: '100%',
+              padding: '14px 18px',
+              borderRadius: 999,
+              background: COLORS.tomato,
+              color: COLORS.cream,
+              border: 'none',
+              ...sansStyle,
+              fontSize: 15,
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 8px 20px rgba(232,71,44,0.32)',
+            }}
+          >готово</button>
+        </div>
+      )}
+
+      {/* Weekdays bottom sheet */}
+      {activeSheet === 'weekdays' && (
+        <div style={{
+          position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 51,
+          background: '#fff',
+          borderRadius: '24px 24px 0 0',
+          padding: '20px 24px calc(env(safe-area-inset-bottom,0px) + 24px)',
+          boxShadow: '0 -8px 40px rgba(26,22,18,0.18)',
+          maxHeight: '78dvh',
+          overflowY: 'auto',
+          transform: 'translateY(0)',
+          transition: 'transform 300ms cubic-bezier(0.22,1,0.36,1)',
+          animation: 'sheetUp 300ms cubic-bezier(0.22,1,0.36,1) both',
+        }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(26,22,18,0.15)', margin: '0 auto 18px' }} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <div style={{ ...sansStyle, fontSize: 20, fontWeight: 700, color: COLORS.ink }}>дни недели</div>
+            <button
+              onClick={() => { haptic('light'); setActiveSheet(null) }}
+              aria-label="закрыть"
+              style={{
+                width: 32, height: 32, borderRadius: '50%',
+                background: 'rgba(26,22,18,0.06)',
+                border: 'none',
+                ...sansStyle,
+                fontSize: 18,
+                color: COLORS.ink,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                lineHeight: 1,
+              }}
+            >×</button>
+          </div>
+          <div style={{ ...sansStyle, fontSize: 13, color: COLORS.inkSoft, marginBottom: 18, lineHeight: 1.4 }}>
+            в какие дни вам удобно встречаться
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 22 }}>
+            {AVAILABLE_WEEKDAYS.map((d) => {
+              const selected = settings.weekdays.includes(d)
+              return (
+                <button
+                  key={d}
+                  onClick={() => toggleWeekday(d)}
+                  style={{
+                    flex: '1 0 auto',
+                    minWidth: 60,
+                    padding: '12px 18px',
+                    borderRadius: 999,
+                    background: selected ? COLORS.tomato : 'rgba(26,22,18,0.06)',
+                    color: selected ? COLORS.cream : COLORS.ink,
+                    border: 'none',
+                    ...sansStyle,
+                    fontSize: 15,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 180ms ease',
+                    boxShadow: selected ? '0 6px 16px rgba(232,71,44,0.28)' : 'none',
+                  }}
+                >{d}</button>
+              )
+            })}
+          </div>
+          <button
+            onClick={() => { haptic('light'); setActiveSheet(null) }}
+            style={{
+              width: '100%',
+              padding: '14px 18px',
+              borderRadius: 999,
+              background: COLORS.tomato,
+              color: COLORS.cream,
+              border: 'none',
+              ...sansStyle,
+              fontSize: 15,
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 8px 20px rgba(232,71,44,0.32)',
+            }}
+          >готово</button>
+        </div>
       )}
     </div>
     </PageTransition>
