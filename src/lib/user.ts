@@ -83,6 +83,10 @@ export interface UserProfile {
   hobbies?: string[]
   qualities?: string[]
   vibes?: string[]
+  relationship?: string
+  children?: string
+  yourQualities?: string[]
+  budget?: string
 }
 
 export async function saveProfile(userId: string, profile: UserProfile): Promise<void> {

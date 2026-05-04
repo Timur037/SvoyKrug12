@@ -32,7 +32,7 @@ export function OnbWork() {
   }
 
   return (
-    <OnbShell step={3} total={7} backTo="/onboarding/age">
+    <OnbShell step={5} total={11} backTo="/onboarding/children">
       <div style={{ padding: '32px 22px 40px', flex: 1, overflowY: 'auto', scrollbarWidth: 'none' }}>
         <h1 style={{ margin: '0 0 8px', ...serifStyle, fontSize: 40, lineHeight: 1.0, color: COLORS.ink }}>
           чем занимаетесь?

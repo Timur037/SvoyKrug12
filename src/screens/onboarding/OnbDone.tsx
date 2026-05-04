@@ -19,15 +19,30 @@ export function OnbDone() {
     haptic('medium')
     try {
       localStorage.setItem('svoy_krug_onboarded', '1')
-      const gender   = localStorage.getItem('svoy_krug_gender') ?? undefined
-      const ageRaw   = localStorage.getItem('svoy_krug_age')
-      const age      = ageRaw ? parseInt(ageRaw, 10) : undefined
-      const work     = localStorage.getItem('svoy_krug_work') ?? undefined
-      const district = localStorage.getItem('svoy_krug_district') ?? undefined
-      const hobbies  = readLS<string[]>('svoy_krug_hobbies', [])
-      const qualities = readLS<string[]>('svoy_krug_qualities', [])
+      const gender         = localStorage.getItem('svoy_krug_gender') ?? undefined
+      const ageRaw         = localStorage.getItem('svoy_krug_age')
+      const age            = ageRaw ? parseInt(ageRaw, 10) : undefined
+      const relationship   = localStorage.getItem('svoy_krug_relationship') ?? undefined
+      const children       = localStorage.getItem('svoy_krug_children') ?? undefined
+      const work           = localStorage.getItem('svoy_krug_work') ?? undefined
+      const district       = localStorage.getItem('svoy_krug_district') ?? undefined
+      const hobbies        = readLS<string[]>('svoy_krug_hobbies', [])
+      const qualities      = readLS<string[]>('svoy_krug_qualities', [])
+      const yourQualities  = readLS<string[]>('svoy_krug_your_qualities', [])
+      const budget         = localStorage.getItem('svoy_krug_budget') ?? undefined
       const user = await upsertUser()
-      await saveProfile(user.id, { gender, age, work, district, hobbies, qualities })
+      await saveProfile(user.id, {
+        gender,
+        age,
+        work,
+        district,
+        hobbies,
+        qualities,
+        relationship,
+        children,
+        yourQualities,
+        budget,
+      })
     } catch (err) { console.error('saveProfile error:', err) }
     navigate('/home', { replace: true })
   }

@@ -20,6 +20,10 @@ import { OnbGender } from './screens/onboarding/OnbGender'
 import { OnbAge } from './screens/onboarding/OnbAge'
 import { OnbWork } from './screens/onboarding/OnbWork'
 import { OnbDistrict } from './screens/onboarding/OnbDistrict'
+import { OnbRelationship } from './screens/onboarding/OnbRelationship'
+import { OnbChildren } from './screens/onboarding/OnbChildren'
+import { OnbYourQualities } from './screens/onboarding/OnbYourQualities'
+import { OnbBudget } from './screens/onboarding/OnbBudget'
 import { OnbDone } from './screens/onboarding/OnbDone'
 import { HomeScreen } from './screens/HomeScreen'
 import { CalendarScreen } from './screens/CalendarScreen'
@@ -68,6 +72,10 @@ export default function App() {
           <Route path="/onboarding/age" element={<OnbAge />} />
           <Route path="/onboarding/work" element={<OnbWork />} />
           <Route path="/onboarding/district" element={<OnbDistrict />} />
+          <Route path="/onboarding/relationship" element={<OnbRelationship />} />
+          <Route path="/onboarding/children" element={<OnbChildren />} />
+          <Route path="/onboarding/your-qualities" element={<OnbYourQualities />} />
+          <Route path="/onboarding/budget" element={<OnbBudget />} />
           <Route path="/onboarding/done" element={<OnbDone />} />
           <Route path="/home" element={<HomeScreen />} />
           <Route path="/calendar" element={<CalendarScreen />} />

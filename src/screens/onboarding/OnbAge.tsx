@@ -40,11 +40,11 @@ export function OnbAge() {
   function next() {
     haptic('medium')
     try { localStorage.setItem('svoy_krug_age', String(age)) } catch { /* ignore */ }
-    navigate('/onboarding/work')
+    navigate('/onboarding/relationship')
   }
 
   return (
-    <OnbShell step={2} total={7} backTo="/onboarding/gender">
+    <OnbShell step={2} total={11} backTo="/onboarding/gender">
       <div style={{ padding: '32px 22px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <h1 style={{ margin: '0 0 8px', ...serifStyle, fontSize: 40, lineHeight: 1.0, color: COLORS.ink }}>
           сколько вам лет?

@@ -5,21 +5,21 @@ import { OnbShell } from '../../components/OnbShell'
 import { haptic } from '../../lib/telegram'
 
 const QUALITIES = [
-  { emoji: '⭐', label: 'честность' },
-  { emoji: '👀', label: 'внимательность' },
-  { emoji: '🔥', label: 'теплота' },
-  { emoji: '🌿', label: 'спокойствие' },
+  { emoji: '☀️', label: 'искренность' },
+  { emoji: '😂', label: 'чувство юмора' },
   { emoji: '⚡', label: 'энергия' },
-  { emoji: '😂', label: 'юмор' },
+  { emoji: '🌿', label: 'спокойствие' },
+  { emoji: '🧠', label: 'глубина' },
+  { emoji: '🔥', label: 'теплота' },
   { emoji: '🎯', label: 'прямота' },
   { emoji: '🌟', label: 'харизма' },
-  { emoji: '🧠', label: 'глубина' },
   { emoji: '💡', label: 'любопытство' },
+  { emoji: '😎', label: 'стиль' },
 ]
 
 const MAX = 3
 
-export function OnbQualities() {
+export function OnbYourQualities() {
   const navigate = useNavigate()
   const [picked, setPicked] = useState<string[]>([])
 
@@ -35,15 +35,15 @@ export function OnbQualities() {
   function next() {
     if (picked.length === 0) return
     haptic('medium')
-    try { localStorage.setItem('svoy_krug_qualities', JSON.stringify(picked)) } catch { /* ignore */ }
+    try { localStorage.setItem('svoy_krug_your_qualities', JSON.stringify(picked)) } catch { /* ignore */ }
     navigate('/onboarding/budget')
   }
 
   return (
-    <OnbShell step={8} total={11} backTo="/onboarding/hobbies">
+    <OnbShell step={9} total={11} backTo="/onboarding/qualities">
       <div style={{ padding: '32px 22px 140px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <h1 style={{ margin: '0 0 6px', ...serifStyle, fontSize: 40, lineHeight: 1.0, color: COLORS.ink }}>
-          ценю в людях
+          что в вас ценят друзья?
         </h1>
         <p style={{ ...sansStyle, fontSize: 14, color: COLORS.inkSoft, margin: '0 0 32px' }}>
           выберите до {MAX} качеств
@@ -116,7 +116,7 @@ export function OnbQualities() {
             transition: 'all 220ms ease', cursor: picked.length > 0 ? 'pointer' : 'default',
           }}
         >
-          дальше →
+          продолжить →
         </button>
       </div>
     </OnbShell>

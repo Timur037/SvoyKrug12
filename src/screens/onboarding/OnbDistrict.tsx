@@ -23,7 +23,7 @@ export function OnbDistrict() {
   }
 
   return (
-    <OnbShell step={4} total={7} backTo="/onboarding/work">
+    <OnbShell step={6} total={11} backTo="/onboarding/work">
       <div style={{ padding: '32px 22px 40px', flex: 1, overflowY: 'auto', scrollbarWidth: 'none' }}>
         <h1 style={{ margin: '0 0 8px', ...serifStyle, fontSize: 40, lineHeight: 1.0, color: COLORS.ink }}>
           где встречаетесь?

@@ -39,7 +39,7 @@ export function OnbHobbies() {
   }
 
   return (
-    <OnbShell step={5} total={7} backTo="/onboarding/quiz1">
+    <OnbShell step={7} total={11} backTo="/onboarding/quiz1">
       <div style={{ padding: '32px 22px 140px', flex: 1, overflowY: 'auto', scrollbarWidth: 'none' }}>
         <h1 style={{ margin: '0 0 6px', ...serifStyle, fontSize: 40, lineHeight: 1.0, color: COLORS.ink }}>
           что вам интересно?

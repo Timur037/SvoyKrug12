@@ -4,9 +4,15 @@ import { COLORS, RADII, SHADOWS, serifStyle, sansStyle } from '../../theme'
 import { OnbShell } from '../../components/OnbShell'
 import { haptic } from '../../lib/telegram'
 
-const OPTIONS = ['мужчина', 'женщина', 'небинарный'] as const
+const OPTIONS = [
+  'одинок / одинока',
+  'в отношениях',
+  'женат / замужем',
+  'всё сложно',
+  'предпочитаю не говорить',
+] as const
 
-export function OnbGender() {
+export function OnbRelationship() {
   const navigate = useNavigate()
   const [picked, setPicked] = useState<string | null>(null)
 
@@ -14,18 +20,18 @@ export function OnbGender() {
     if (picked) return
     haptic('medium')
     setPicked(val)
-    try { localStorage.setItem('svoy_krug_gender', val) } catch { /* ignore */ }
-    setTimeout(() => navigate('/onboarding/age'), 240)
+    try { localStorage.setItem('svoy_krug_relationship', val) } catch { /* ignore */ }
+    setTimeout(() => navigate('/onboarding/children'), 240)
   }
 
   return (
-    <OnbShell step={1} total={11} backTo="/onboarding/3">
+    <OnbShell step={3} total={11} backTo="/onboarding/age">
       <div style={{ padding: '32px 22px 40px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <h1 style={{ margin: '0 0 8px', ...serifStyle, fontSize: 40, lineHeight: 1.0, color: COLORS.ink }}>
-          кто вы?
+          семейное положение
         </h1>
         <p style={{ ...sansStyle, fontSize: 14, color: COLORS.inkSoft, margin: '0 0 36px' }}>
-          помогает подобрать компанию
+          это помогает подобрать компанию
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
