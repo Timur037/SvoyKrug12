@@ -86,8 +86,8 @@ export function HomeScreen() {
   const userGender = (() => { try { return localStorage.getItem('svoy_krug_gender') ?? '' } catch { return '' } })()
 
   const genderOptions = ALL_GENDER_OPTIONS.filter((opt) => {
-    if (opt.id === 'women_only' && userGender === 'мужчина') return false
-    if (opt.id === 'men_only'   && userGender === 'женщина') return false
+    if (opt.id === 'women_only') return userGender === 'женщина'
+    if (opt.id === 'men_only')   return userGender === 'мужчина'
     return true
   })
 
