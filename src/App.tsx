@@ -5,6 +5,7 @@ import {
   Route,
   Routes,
   useLocation,
+  useNavigate,
 } from 'react-router-dom'
 import { Onb1 } from './screens/onboarding/Onb1'
 import { Onb2 } from './screens/onboarding/Onb2'
@@ -48,6 +49,27 @@ function RootRedirect() {
   return <Navigate to="/onboarding/1" replace />
 }
 
+// Handles deep-links from Telegram bot messages.
+// If the bot sends a button with startapp=review_MEETUPID,
+// we save the meetup id and navigate to /post-event automatically.
+function StartParamHandler() {
+  const navigate = useNavigate()
+  useEffect(() => {
+    try {
+      const param = window.Telegram?.WebApp?.initDataUnsafe?.start_param ?? ''
+      if (param.startsWith('review_')) {
+        const meetupId = param.replace('review_', '')
+        localStorage.setItem('svoy_krug_review_meetup', meetupId)
+        navigate('/post-event', { replace: true })
+      }
+    } catch {
+      // ignore — not in Telegram context
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  return null
+}
+
 function PostHogPageView() {
   const location = useLocation()
   useEffect(() => {
@@ -63,6 +85,7 @@ export default function App() {
     <BrowserRouter>
       <UserProvider>
         <PostHogPageView />
+        <StartParamHandler />
         <Routes>
           <Route path="/" element={<RootRedirect />} />
           <Route path="/onboarding/1" element={<Onb1 />} />
