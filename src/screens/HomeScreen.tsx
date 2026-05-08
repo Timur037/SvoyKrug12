@@ -50,7 +50,7 @@ const GENDER_DESC: Partial<Record<GenderFilter | 'all', string>> = {
   mixed:      'мужчины и женщины — подбираем по интересам и возрасту',
   women_only: 'только женщины — другая атмосфера, другой разговор',
   men_only:   'только мужчины — разговор без светских норм',
-  pairs:      'вечер для пар — приходите вдвоём',
+  pairs:      'три пары за одним столом — парень и девушка, не друзья',
 }
 
 // Kind whitelist — padel and future formats won't leak into feed
