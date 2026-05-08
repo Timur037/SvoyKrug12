@@ -334,7 +334,7 @@ function PeopleStep({ participants, selected, onToggle, venueRating, setVenueRat
           <div style={{ ...sansStyle, fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: 'rgba(245,239,230,0.45)', textTransform: 'uppercase', marginBottom: 14 }}>
             оцените место
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, maxWidth: 280 }}>
             {[1, 2, 3, 4, 5].map((star) => {
               const filled = star <= venueRating
               return (
@@ -342,12 +342,13 @@ function PeopleStep({ participants, selected, onToggle, venueRating, setVenueRat
                   key={star}
                   onClick={() => { haptic('light'); setVenueRating(star) }}
                   style={{
-                    flex: 1, padding: '14px 0', borderRadius: 16,
+                    width: 48, height: 48, flexShrink: 0, borderRadius: 14,
                     background: filled ? 'rgba(244,201,93,0.14)' : 'rgba(245,239,230,0.05)',
                     border: `1.5px solid ${filled ? 'rgba(244,201,93,0.40)' : 'rgba(245,239,230,0.08)'}`,
-                    fontSize: 24, lineHeight: 1, cursor: 'pointer',
+                    fontSize: 22, lineHeight: 1, cursor: 'pointer',
                     transition: 'all 180ms ease',
-                    transform: filled ? 'scale(1.06)' : 'scale(1)',
+                    transform: filled ? 'scale(1.08)' : 'scale(1)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}
                   aria-label={`${star} звёзд`}
                 >
