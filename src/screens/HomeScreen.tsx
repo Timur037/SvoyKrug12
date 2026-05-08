@@ -7,8 +7,8 @@ import { Seats } from '../components/Seats'
 import { PriceChip } from '../components/PriceChip'
 import { PageTransition } from '../components/PageTransition'
 import { haptic } from '../lib/telegram'
-import { fetchCircles } from '../lib/db'
-import type { DbCircle, GenderFilter } from '../lib/db'
+import { fetchCircles, fetchUnreviewedPastBooking } from '../lib/db'
+import type { DbCircle, GenderFilter, DbBookingWithMeetup } from '../lib/db'
 import { MOCK_CIRCLES } from '../lib/mockCircles'
 import { useUser } from '../context/UserContext'
 
@@ -67,6 +67,8 @@ export function HomeScreen() {
   const [genderFilter, setGenderFilter] = useState<GenderFilter | 'all'>('all')
   const [circles, setCircles] = useState<DbCircle[]>([])
   const [loaded, setLoaded] = useState<boolean>(false)
+  const [unreviewedBooking, setUnreviewedBooking] = useState<DbBookingWithMeetup | null | undefined>(undefined)
+  const [reviewDismissed, setReviewDismissed] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useUser()
@@ -82,6 +84,13 @@ export function HomeScreen() {
       .then((data) => { setCircles(data.length > 0 ? data : MOCK_CIRCLES); setLoaded(true) })
       .catch(() => { setCircles(MOCK_CIRCLES); setLoaded(true) })
   }, [])
+
+  useEffect(() => {
+    if (!user) return
+    fetchUnreviewedPastBooking(user.id)
+      .then(setUnreviewedBooking)
+      .catch(() => setUnreviewedBooking(null))
+  }, [user])
 
   const userGender = (() => { try { return localStorage.getItem('svoy_krug_gender') ?? '' } catch { return '' } })()
 
@@ -397,6 +406,90 @@ export function HomeScreen() {
           </div>
         )}
         </div>
+
+        {/* ── Unreviewed past meetup banner ── */}
+        {unreviewedBooking && !reviewDismissed && (
+          <div style={{
+            margin: '10px 20px 0',
+            borderRadius: 20,
+            overflow: 'hidden',
+            position: 'relative',
+            zIndex: 2,
+            boxShadow: '0 4px 20px rgba(26,22,18,0.14)',
+            animation: 'cardIn 400ms cubic-bezier(0.22,1,0.36,1) both',
+          }}>
+            {/* Background photo */}
+            {unreviewedBooking.meetup.photo && (
+              <img
+                src={unreviewedBooking.meetup.photo}
+                alt=""
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.45) saturate(0.8)' }}
+              />
+            )}
+            {!unreviewedBooking.meetup.photo && (
+              <div style={{ position: 'absolute', inset: 0, background: COLORS.ink }} />
+            )}
+            {/* Gradient */}
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(244,201,93,0.18) 0%, transparent 60%)' }} />
+
+            <div style={{ position: 'relative', zIndex: 2, padding: '16px 18px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {/* Top row */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{
+                  ...sansStyle, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em',
+                  textTransform: 'uppercase', color: COLORS.honey,
+                }}>
+                  🌙 тот вечер
+                </span>
+                <button
+                  onClick={() => { haptic('light'); setReviewDismissed(true) }}
+                  style={{ background: 'transparent', border: 'none', color: 'rgba(245,239,230,0.50)', fontSize: 18, cursor: 'pointer', padding: '0 2px', lineHeight: 1 }}
+                  aria-label="закрыть"
+                >×</button>
+              </div>
+
+              {/* Title */}
+              <div>
+                <div style={{ ...serifStyle, fontSize: 24, color: COLORS.cream, lineHeight: 1.05, marginBottom: 4 }}>
+                  {unreviewedBooking.meetup.title}
+                </div>
+                <div style={{ ...sansStyle, fontSize: 12, color: 'rgba(245,239,230,0.60)' }}>
+                  {unreviewedBooking.meetup.date_label} · {unreviewedBooking.meetup.place}
+                </div>
+              </div>
+
+              {/* CTA */}
+              <button
+                onClick={() => {
+                  haptic('medium')
+                  try { localStorage.setItem('svoy_krug_review_meetup', unreviewedBooking.meetup.id) } catch { /* ignore */ }
+                  navigate('/post-event')
+                }}
+                style={{
+                  ...sansStyle,
+                  alignSelf: 'flex-start',
+                  padding: '10px 20px',
+                  borderRadius: 999,
+                  background: COLORS.cream,
+                  color: COLORS.ink,
+                  border: 'none',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.20)',
+                }}
+              >
+                как прошёл вечер?
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                  <path d="M5 12h14M13 6l6 6-6 6" stroke={COLORS.ink} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ── Section label ── */}
         <div style={{

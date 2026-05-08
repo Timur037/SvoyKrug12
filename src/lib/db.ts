@@ -155,6 +155,14 @@ export async function fetchMeetupParticipants(meetupId: string): Promise<DbParti
     .filter((u): u is DbParticipant => u != null)
 }
 
+// Returns the most recent past booking that hasn't been reviewed yet (mood is null)
+export async function fetchUnreviewedPastBooking(userId: string): Promise<DbBookingWithMeetup | null> {
+  const bookings = await fetchUserBookings(userId)
+  return bookings.find(
+    (b) => b.meetup.status === 'past' && !b.mood
+  ) ?? null
+}
+
 // Save post-event mood to a booking
 export async function saveMoodToBooking(bookingId: string, mood: string): Promise<void> {
   const { error } = await supabase
