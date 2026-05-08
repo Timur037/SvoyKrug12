@@ -235,7 +235,7 @@ export function Onb3() {
 
   function start() {
     haptic('medium')
-    navigate('/onboarding/gender')
+    navigate('/onboarding/name')
   }
 
   return (

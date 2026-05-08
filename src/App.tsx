@@ -17,6 +17,7 @@ import { Quiz4 } from './screens/onboarding/Quiz4'
 import { Quiz5 } from './screens/onboarding/Quiz5'
 import { OnbHobbies } from './screens/onboarding/OnbHobbies'
 import { OnbQualities } from './screens/onboarding/OnbQualities'
+import { OnbName } from './screens/onboarding/OnbName'
 import { OnbGender } from './screens/onboarding/OnbGender'
 import { OnbAge } from './screens/onboarding/OnbAge'
 import { OnbWork } from './screens/onboarding/OnbWork'
@@ -98,6 +99,7 @@ export default function App() {
           <Route path="/onboarding/quiz5" element={<Quiz5 />} />
           <Route path="/onboarding/hobbies" element={<OnbHobbies />} />
           <Route path="/onboarding/qualities" element={<OnbQualities />} />
+          <Route path="/onboarding/name" element={<OnbName />} />
           <Route path="/onboarding/gender" element={<OnbGender />} />
           <Route path="/onboarding/age" element={<OnbAge />} />
           <Route path="/onboarding/work" element={<OnbWork />} />

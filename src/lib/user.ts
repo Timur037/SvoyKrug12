@@ -40,7 +40,9 @@ function getLocalTelegramId(): number {
 export async function upsertUser(): Promise<AppUser> {
   const tg = getTelegramUser()
   const telegramId = tg?.id ?? getLocalTelegramId()
-  const name = tg?.name ?? localStorage.getItem('svoy_krug_dev_name') ?? 'гость'
+  // Priority: name from onboarding → Telegram name → fallback
+  const customName = (() => { try { return localStorage.getItem('svoy_krug_name') } catch { return null } })()
+  const name = customName || tg?.name || localStorage.getItem('svoy_krug_dev_name') || 'гость'
 
   try {
     // 1. Try to find existing user
@@ -52,6 +54,12 @@ export async function upsertUser(): Promise<AppUser> {
 
     if (existing) {
       localStorage.setItem('svoy_krug_user_id', existing.id)
+      // Update name if user went through onboarding and changed it
+      const storedName = customName
+      if (storedName && storedName !== existing.name) {
+        await supabase.from('users').update({ name: storedName }).eq('id', existing.id)
+        return { id: existing.id, telegramId: existing.telegram_id, name: storedName }
+      }
       return { id: existing.id, telegramId: existing.telegram_id, name: existing.name }
     }
 
