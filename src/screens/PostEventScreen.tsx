@@ -444,9 +444,23 @@ function PeopleStep({ participants, selected, onToggle, venueRating, setVenueRat
               </span>
             </button>
           ) : reportSent ? (
-            <div style={{ padding: '14px 18px', borderRadius: 16, background: 'rgba(45,74,62,0.30)', border: '1px solid rgba(45,74,62,0.50)' }}>
-              <div style={{ ...sansStyle, fontSize: 14, color: COLORS.cream, fontWeight: 600 }}>✓ жалоба отправлена</div>
-              <div style={{ ...sansStyle, fontSize: 12, color: 'rgba(245,239,230,0.55)', marginTop: 4 }}>мы разберёмся в течение 24 часов.</div>
+            <div style={{
+              padding: '20px 18px', borderRadius: 20,
+              background: 'rgba(45,74,62,0.35)',
+              border: '1.5px solid rgba(45,74,62,0.60)',
+              display: 'flex', alignItems: 'center', gap: 14,
+              animation: 'fadeUp 300ms ease both',
+            }}>
+              <div style={{
+                width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+                background: COLORS.forest,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 18,
+              }}>✓</div>
+              <div>
+                <div style={{ ...sansStyle, fontSize: 15, color: COLORS.cream, fontWeight: 700 }}>жалоба отправлена</div>
+                <div style={{ ...sansStyle, fontSize: 12, color: 'rgba(245,239,230,0.55)', marginTop: 3 }}>разберёмся в течение 24 часов.</div>
+              </div>
             </div>
           ) : (
             <div style={{ padding: '18px', borderRadius: 20, background: 'rgba(245,239,230,0.06)', border: '1px solid rgba(245,239,230,0.10)' }}>
