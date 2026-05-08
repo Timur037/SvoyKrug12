@@ -38,13 +38,23 @@ function isToday(c: DbCircle): boolean {
   return t.includes('сегодня')
 }
 
-const GENDER_OPTIONS: { id: GenderFilter | 'all'; label: string }[] = [
+const ALL_GENDER_OPTIONS: { id: GenderFilter | 'all'; label: string }[] = [
   { id: 'all',        label: 'все'       },
   { id: 'mixed',      label: 'свой круг' },
   { id: 'women_only', label: '♀ женский' },
   { id: 'men_only',   label: '♂ мужской' },
   { id: 'pairs',      label: '◎ пары'    },
 ]
+
+const GENDER_DESC: Partial<Record<GenderFilter | 'all', string>> = {
+  mixed:      'мужчины и женщины — подбираем по интересам и возрасту',
+  women_only: 'только женщины — другая атмосфера, другой разговор',
+  men_only:   'только мужчины — разговор без светских норм',
+  pairs:      'вечер для пар — приходите вдвоём',
+}
+
+// Kind whitelist — padel and future formats won't leak into feed
+const VALID_KINDS = ['УЖИН', 'КОФЕ', 'БРАНЧ', 'ПРОГУЛКА', 'НАСТОЛКИ', 'ВЕЧЕР']
 
 const GENDER_BADGE: Record<string, { label: string; bg: string; color: string }> = {
   women_only: { label: '♀ только женщины', bg: 'rgba(210,80,110,0.82)', color: '#fff' },
@@ -73,7 +83,16 @@ export function HomeScreen() {
       .catch(() => { setCircles(MOCK_CIRCLES); setLoaded(true) })
   }, [])
 
+  const userGender = (() => { try { return localStorage.getItem('svoy_krug_gender') ?? '' } catch { return '' } })()
+
+  const genderOptions = ALL_GENDER_OPTIONS.filter((opt) => {
+    if (opt.id === 'women_only' && userGender === 'мужчина') return false
+    if (opt.id === 'men_only'   && userGender === 'женщина') return false
+    return true
+  })
+
   const displayCircles = circles
+    .filter((c) => VALID_KINDS.some((k) => c.kind.includes(k)))
     .filter((c) => activeCategory === 'all' || c.kind.includes(activeCategory))
     .filter((c) => genderFilter === 'all' || c.gender_filter === genderFilter)
 
@@ -285,13 +304,14 @@ export function HomeScreen() {
           paddingLeft: 22,
           paddingRight: 22,
           marginTop: 10,
-          marginBottom: 2,
+          marginBottom: 0,
           position: 'relative',
           zIndex: 2,
           display: 'flex',
-          alignItems: 'center',
-          gap: 10,
+          flexDirection: 'column',
+          gap: 6,
         }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
             display: 'flex',
             background: 'rgba(26,22,18,0.05)',
@@ -302,7 +322,7 @@ export function HomeScreen() {
             scrollbarWidth: 'none',
             flex: 1,
           }}>
-            {GENDER_OPTIONS.map((opt) => {
+            {genderOptions.map((opt) => {
               const isActive = genderFilter === opt.id
               let activeBg: string = COLORS.ink
               let activeColor: string = COLORS.cream
@@ -361,6 +381,21 @@ export function HomeScreen() {
               <path d="M12 11v5M12 8h.01" stroke={COLORS.inkSoft} strokeWidth="1.8" strokeLinecap="round"/>
             </svg>
           </button>
+        </div>
+
+        {/* Gender description */}
+        {genderFilter !== 'all' && GENDER_DESC[genderFilter] && (
+          <div style={{
+            ...sansStyle,
+            fontSize: 11,
+            color: COLORS.inkSoft,
+            paddingLeft: 4,
+            lineHeight: 1.4,
+            animation: 'heroIn 220ms ease both',
+          }}>
+            {GENDER_DESC[genderFilter]}
+          </div>
+        )}
         </div>
 
         {/* ── Section label ── */}
