@@ -19,11 +19,10 @@ type Step = 'mood' | 'people' | 'result'
 interface Mood { id: string; emoji: string; label: string; sub: string }
 
 const MOODS: Mood[] = [
-  { id: 'cosy',      emoji: '🌙', label: 'уютно',      sub: 'тихо и тепло'        },
-  { id: 'lively',   emoji: '🔥', label: 'оживлённо',  sub: 'много смеялись'       },
-  { id: 'special',  emoji: '✨', label: 'особенный',  sub: 'такое редко бывает'   },
-  { id: 'calm',     emoji: '😌', label: 'спокойно',   sub: 'размеренно, глубоко'  },
-  { id: 'celebrate',emoji: '🥂', label: 'праздник',   sub: 'повод был найден'     },
+  { id: 'cosy',    emoji: '🌙', label: 'уютно',     sub: 'тихо и тепло'       },
+  { id: 'lively',  emoji: '🔥', label: 'оживлённо', sub: 'много смеялись'      },
+  { id: 'special', emoji: '✨', label: 'особенный', sub: 'такое редко бывает'  },
+  { id: 'calm',    emoji: '😌', label: 'спокойно',  sub: 'размеренно, глубоко' },
 ]
 
 const AVATAR_COLORS = [
