@@ -11,6 +11,7 @@ import {
   saveVenueRating,
   saveMatchRequests,
   findMutualMatches,
+  submitReport,
   type DbParticipant,
 } from '../lib/db'
 
@@ -117,7 +118,8 @@ export function PostEventScreen() {
   if (step === 'people')
     return <PeopleStep participants={participants} selected={selected} onToggle={toggle}
              venueRating={venueRating} setVenueRating={setVenueRating}
-             saving={saving} onFinish={finish} />
+             saving={saving} onFinish={finish}
+             userId={user?.id ?? null} meetupId={meetupId} />
   return <ResultStep mutualMatches={mutualMatches} onHome={() => navigate('/home')} />
 }
 
@@ -231,7 +233,7 @@ function MoodStep({ moodId, setMoodId, onNext }: {
 }
 
 // ── Step 2: People + stars ────────────────────────────────────────────
-function PeopleStep({ participants, selected, onToggle, venueRating, setVenueRating, saving, onFinish }: {
+function PeopleStep({ participants, selected, onToggle, venueRating, setVenueRating, saving, onFinish, userId, meetupId }: {
   participants: DbParticipant[]
   selected: Set<string>
   onToggle: (id: string) => void
@@ -239,8 +241,32 @@ function PeopleStep({ participants, selected, onToggle, venueRating, setVenueRat
   setVenueRating: (r: number) => void
   saving: boolean
   onFinish: () => void
+  userId: string | null
+  meetupId: string | null
 }) {
   const navigate = useNavigate()
+  const [reportOpen, setReportOpen] = useState(false)
+  const [reportTarget, setReportTarget] = useState<string | null>(null)
+  const [reportText, setReportText] = useState('')
+  const [reportSending, setReportSending] = useState(false)
+  const [reportSent, setReportSent] = useState(false)
+
+  async function sendReport() {
+    if (!reportText.trim() || reportSending) return
+    haptic('medium')
+    setReportSending(true)
+    try {
+      await submitReport({
+        userId,
+        meetupId,
+        reportedUserId: reportTarget,
+        message: reportText.trim(),
+        source: 'post_event',
+      })
+      setReportSent(true)
+    } catch { /* ignore */ }
+    finally { setReportSending(false) }
+  }
   return (
     <div style={{ position: 'relative', width: '100%', minHeight: '100dvh', background: COLORS.ink, color: COLORS.cream, overflowX: 'hidden' }}>
       <style>{`@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }`}</style>
@@ -394,6 +420,105 @@ function PeopleStep({ participants, selected, onToggle, venueRating, setVenueRat
           {venueRating > 0 && (
             <div style={{ ...sansStyle, fontSize: 12, color: COLORS.honey, fontWeight: 600, marginTop: 10 }}>
               {['', 'плохо', 'так себе', 'нормально', 'хорошо', 'отлично'][venueRating]}
+            </div>
+          )}
+        </div>
+
+        {/* Report / support section */}
+        <div style={{ marginTop: 32 }}>
+          {!reportOpen ? (
+            <button
+              onClick={() => { haptic('light'); setReportOpen(true) }}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                display: 'flex', alignItems: 'center', gap: 7,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke="rgba(245,239,230,0.30)" strokeWidth="1.6"/>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" stroke="rgba(245,239,230,0.30)" strokeWidth="1.6" strokeLinecap="round"/>
+                <circle cx="12" cy="17" r="0.8" fill="rgba(245,239,230,0.30)"/>
+              </svg>
+              <span style={{ ...sansStyle, fontSize: 13, color: 'rgba(245,239,230,0.35)', fontWeight: 500 }}>
+                жалоба или проблема?
+              </span>
+            </button>
+          ) : reportSent ? (
+            <div style={{ padding: '14px 18px', borderRadius: 16, background: 'rgba(45,74,62,0.30)', border: '1px solid rgba(45,74,62,0.50)' }}>
+              <div style={{ ...sansStyle, fontSize: 14, color: COLORS.cream, fontWeight: 600 }}>✓ жалоба отправлена</div>
+              <div style={{ ...sansStyle, fontSize: 12, color: 'rgba(245,239,230,0.55)', marginTop: 4 }}>мы разберёмся в течение 24 часов.</div>
+            </div>
+          ) : (
+            <div style={{ padding: '18px', borderRadius: 20, background: 'rgba(245,239,230,0.06)', border: '1px solid rgba(245,239,230,0.10)' }}>
+              <div style={{ ...sansStyle, fontSize: 12, fontWeight: 700, letterSpacing: '0.10em', color: 'rgba(245,239,230,0.45)', textTransform: 'uppercase' as const, marginBottom: 14 }}>
+                жалоба / обращение
+              </div>
+
+              {/* Optional: select participant */}
+              {(participants.length > 0 || true) && (
+                <>
+                  <div style={{ ...sansStyle, fontSize: 12, color: 'rgba(245,239,230,0.40)', marginBottom: 10 }}>
+                    на кого жалоба? (необязательно)
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 8, marginBottom: 14 }}>
+                    {(participants.length > 0 ? participants : DEMO_PARTICIPANTS).map((p) => {
+                      const isTarget = reportTarget === p.id
+                      return (
+                        <button
+                          key={p.id}
+                          onClick={() => { haptic('light'); setReportTarget(isTarget ? null : p.id) }}
+                          style={{
+                            padding: '7px 14px', borderRadius: 99,
+                            background: isTarget ? 'rgba(232,71,44,0.22)' : 'rgba(245,239,230,0.08)',
+                            border: `1px solid ${isTarget ? 'rgba(232,71,44,0.45)' : 'rgba(245,239,230,0.12)'}`,
+                            color: isTarget ? COLORS.tomato : 'rgba(245,239,230,0.60)',
+                            ...sansStyle, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                            transition: 'all 180ms ease',
+                          }}
+                        >
+                          {p.name.split(' ')[0]}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
+
+              {/* Message */}
+              <textarea
+                value={reportText}
+                onChange={e => setReportText(e.target.value)}
+                placeholder="опишите что произошло..."
+                rows={3}
+                style={{
+                  width: '100%', boxSizing: 'border-box' as const,
+                  padding: '12px 14px', borderRadius: 14,
+                  border: '1px solid rgba(245,239,230,0.12)',
+                  background: 'rgba(245,239,230,0.06)',
+                  ...sansStyle, fontSize: 14, color: COLORS.cream,
+                  resize: 'none' as const, outline: 'none', lineHeight: 1.5,
+                }}
+              />
+              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                <button
+                  onClick={() => { setReportOpen(false); setReportText(''); setReportTarget(null) }}
+                  style={{ flex: 1, padding: '12px', borderRadius: 99, background: 'rgba(245,239,230,0.08)', border: 'none', color: 'rgba(245,239,230,0.45)', ...sansStyle, fontSize: 13, cursor: 'pointer' }}
+                >
+                  отмена
+                </button>
+                <button
+                  disabled={!reportText.trim() || reportSending}
+                  onClick={sendReport}
+                  style={{
+                    flex: 2, padding: '12px', borderRadius: 99, border: 'none',
+                    background: reportText.trim() ? COLORS.tomato : 'rgba(245,239,230,0.10)',
+                    color: COLORS.cream, ...sansStyle, fontSize: 13, fontWeight: 700,
+                    cursor: reportText.trim() ? 'pointer' : 'default', transition: 'background 200ms',
+                  }}
+                >
+                  {reportSending ? 'отправляем...' : 'отправить жалобу →'}
+                </button>
+              </div>
             </div>
           )}
         </div>

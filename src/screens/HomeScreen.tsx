@@ -7,7 +7,7 @@ import { Seats } from '../components/Seats'
 import { PriceChip } from '../components/PriceChip'
 import { PageTransition } from '../components/PageTransition'
 import { haptic } from '../lib/telegram'
-import { fetchCircles, fetchUnreviewedPastBooking } from '../lib/db'
+import { fetchCircles, fetchUnreviewedPastBooking, submitReport } from '../lib/db'
 import type { DbCircle, GenderFilter, DbBookingWithMeetup } from '../lib/db'
 import { MOCK_CIRCLES } from '../lib/mockCircles'
 import { useUser } from '../context/UserContext'
@@ -69,6 +69,10 @@ export function HomeScreen() {
   const [loaded, setLoaded] = useState<boolean>(false)
   const [unreviewedBooking, setUnreviewedBooking] = useState<DbBookingWithMeetup | null | undefined>(undefined)
   const [reviewDismissed, setReviewDismissed] = useState(false)
+  const [showSupport, setShowSupport] = useState(false)
+  const [supportText, setSupportText] = useState('')
+  const [supportSent, setSupportSent] = useState(false)
+  const [supportSending, setSupportSending] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useUser()
@@ -179,28 +183,41 @@ export function HomeScreen() {
               </span>
             </h1>
 
-            {/* Notification bell */}
-            <button
-              style={{
-                marginTop: 4,
-                width: 38,
-                height: 38,
-                borderRadius: RADII.full,
-                background: COLORS.white,
-                border: `1px solid rgba(26,22,18,0.08)`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: SHADOWS.chip,
-                flexShrink: 0,
-              }}
-              onClick={() => haptic('light')}
-              aria-label="Уведомления"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke={COLORS.inkSoft} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+            {/* Top-right buttons */}
+            <div style={{ display: 'flex', gap: 8, marginTop: 4, flexShrink: 0 }}>
+              {/* Support button */}
+              <button
+                style={{
+                  width: 38, height: 38, borderRadius: RADII.full,
+                  background: COLORS.white, border: `1px solid rgba(26,22,18,0.08)`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: SHADOWS.chip, cursor: 'pointer',
+                }}
+                onClick={() => { haptic('light'); setShowSupport(true) }}
+                aria-label="Поддержка"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="9" stroke={COLORS.inkSoft} strokeWidth="1.6"/>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" stroke={COLORS.inkSoft} strokeWidth="1.6" strokeLinecap="round"/>
+                  <circle cx="12" cy="17" r="0.8" fill={COLORS.inkSoft}/>
+                </svg>
+              </button>
+              {/* Notification bell */}
+              <button
+                style={{
+                  width: 38, height: 38, borderRadius: RADII.full,
+                  background: COLORS.white, border: `1px solid rgba(26,22,18,0.08)`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: SHADOWS.chip, cursor: 'pointer',
+                }}
+                onClick={() => haptic('light')}
+                aria-label="Уведомления"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke={COLORS.inkSoft} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Social proof row */}
@@ -801,6 +818,83 @@ export function HomeScreen() {
         </button>
 
         <TabBar active="home" notifDot />
+
+        {/* Support bottom sheet overlay */}
+        {showSupport && (
+          <div onClick={() => { setShowSupport(false); setSupportSent(false); setSupportText('') }}
+            style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(26,22,18,0.45)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }} />
+        )}
+
+        {/* Support bottom sheet */}
+        {showSupport && (
+          <div style={{
+            position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 51,
+            background: COLORS.cream, borderRadius: '24px 24px 0 0',
+            padding: '20px 22px calc(env(safe-area-inset-bottom,0px) + 28px)',
+            boxShadow: '0 -8px 40px rgba(26,22,18,0.18)',
+            animation: 'sheetUp 300ms cubic-bezier(0.22,1,0.36,1) both',
+          }}>
+            <style>{`@keyframes sheetUp { from{transform:translateY(100%)} to{transform:translateY(0)} }`}</style>
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(26,22,18,0.15)', margin: '0 auto 20px' }} />
+
+            {supportSent ? (
+              <div style={{ textAlign: 'center', padding: '20px 0 10px' }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>✓</div>
+                <div style={{ ...serifStyle, fontSize: 26, color: COLORS.ink, marginBottom: 8 }}>отправлено</div>
+                <div style={{ ...sansStyle, fontSize: 14, color: COLORS.inkSoft, lineHeight: 1.5 }}>
+                  мы получили ваше сообщение и скоро ответим.
+                </div>
+                <button onClick={() => { setShowSupport(false); setSupportSent(false); setSupportText('') }}
+                  style={{ marginTop: 24, width: '100%', padding: '14px', borderRadius: 99, background: COLORS.ink, color: COLORS.cream, border: 'none', ...sansStyle, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
+                  закрыть
+                </button>
+              </div>
+            ) : (
+              <>
+                <div style={{ ...serifStyle, fontSize: 26, color: COLORS.ink, marginBottom: 6 }}>поддержка</div>
+                <div style={{ ...sansStyle, fontSize: 13, color: COLORS.inkSoft, marginBottom: 20, lineHeight: 1.5 }}>
+                  напишите нам — ответим в течение дня.
+                </div>
+                <textarea
+                  value={supportText}
+                  onChange={e => setSupportText(e.target.value)}
+                  placeholder="опишите вашу проблему или вопрос..."
+                  rows={4}
+                  style={{
+                    width: '100%', boxSizing: 'border-box',
+                    padding: '14px 16px', borderRadius: 16,
+                    border: '1.5px solid rgba(26,22,18,0.12)',
+                    background: 'rgba(26,22,18,0.03)',
+                    ...sansStyle, fontSize: 15, color: COLORS.ink,
+                    resize: 'none', outline: 'none', lineHeight: 1.55,
+                  }}
+                />
+                <button
+                  disabled={!supportText.trim() || supportSending}
+                  onClick={async () => {
+                    if (!supportText.trim()) return
+                    haptic('medium')
+                    setSupportSending(true)
+                    try {
+                      await submitReport({ userId: user?.id ?? null, meetupId: null, reportedUserId: null, message: supportText.trim(), source: 'home' })
+                      setSupportSent(true)
+                    } catch { /* ignore */ }
+                    finally { setSupportSending(false) }
+                  }}
+                  style={{
+                    marginTop: 12, width: '100%', padding: '15px',
+                    borderRadius: 99, border: 'none',
+                    background: supportText.trim() ? COLORS.ink : 'rgba(26,22,18,0.12)',
+                    color: COLORS.cream, ...sansStyle, fontSize: 15, fontWeight: 700,
+                    cursor: supportText.trim() ? 'pointer' : 'default',
+                    transition: 'background 200ms',
+                  }}>
+                  {supportSending ? 'отправляем...' : 'отправить →'}
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </PageTransition>
   )

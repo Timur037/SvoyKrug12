@@ -155,6 +155,24 @@ export async function fetchMeetupParticipants(meetupId: string): Promise<DbParti
     .filter((u): u is DbParticipant => u != null)
 }
 
+// Submit a support report / complaint
+export async function submitReport(params: {
+  userId: string | null
+  meetupId: string | null
+  reportedUserId: string | null
+  message: string
+  source: 'post_event' | 'home'
+}): Promise<void> {
+  const { error } = await supabase.from('reports').insert({
+    user_id:           params.userId,
+    meetup_id:         params.meetupId,
+    reported_user_id:  params.reportedUserId,
+    message:           params.message,
+    source:            params.source,
+  })
+  if (error) throw error
+}
+
 // Returns the most recent past booking that hasn't been reviewed yet (mood is null)
 export async function fetchUnreviewedPastBooking(userId: string): Promise<DbBookingWithMeetup | null> {
   const bookings = await fetchUserBookings(userId)
