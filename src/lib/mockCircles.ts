@@ -14,6 +14,7 @@ export const MOCK_CIRCLES: DbCircle[] = [
     tilt: -1.2,
     bg: 'photo',
     photo: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=700&fit=crop&q=80',
+    gender_filter: 'mixed',
   },
   {
     id: 'mock-2',
@@ -28,6 +29,7 @@ export const MOCK_CIRCLES: DbCircle[] = [
     tilt: 1.0,
     bg: 'photo',
     photo: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=700&fit=crop&q=80',
+    gender_filter: 'women_only',
   },
   {
     id: 'mock-3',
@@ -42,6 +44,7 @@ export const MOCK_CIRCLES: DbCircle[] = [
     tilt: 0.6,
     bg: 'photo',
     photo: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=700&fit=crop&q=80',
+    gender_filter: 'mixed',
   },
   {
     id: 'mock-4',
@@ -56,6 +59,22 @@ export const MOCK_CIRCLES: DbCircle[] = [
     tilt: -0.8,
     bg: 'photo',
     photo: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=700&fit=crop&q=80',
+    gender_filter: 'men_only',
+  },
+  {
+    id: 'mock-5',
+    kind: 'УЖИН',
+    time_short: 'в воскресенье в 20:00',
+    title: 'Вечер пар',
+    hint: '3 пары · тройное свидание · Патрики',
+    place: 'Selfie, Спиридоновка',
+    price: 3500,
+    seats: 6,
+    taken: 2,
+    tilt: 0.4,
+    bg: 'photo',
+    photo: 'https://images.unsplash.com/photo-1529543544282-ea669407fca3?w=700&fit=crop&q=80',
+    gender_filter: 'pairs',
   },
 ]
 

@@ -98,6 +98,7 @@ export async function saveProfile(userId: string, profile: UserProfile): Promise
   if (profile.hobbies   !== undefined) update.hobbies   = profile.hobbies
   if (profile.qualities !== undefined) update.qualities = profile.qualities
   if (profile.vibes     !== undefined) update.vibes     = profile.vibes
+  if (profile.budget    !== undefined) update.budget    = profile.budget
 
   const { error } = await supabase.from('users').update(update).eq('id', userId)
   if (error) console.error('saveProfile error:', error)

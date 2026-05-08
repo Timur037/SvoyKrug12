@@ -1,5 +1,7 @@
 import { supabase } from './supabase'
 
+export type GenderFilter = 'mixed' | 'women_only' | 'men_only' | 'pairs'
+
 export interface DbCircle {
   id: string
   kind: string
@@ -13,6 +15,7 @@ export interface DbCircle {
   tilt: number
   bg: string
   photo: string | null
+  gender_filter: GenderFilter
 }
 
 export interface DbMeetup {
@@ -33,12 +36,13 @@ export interface DbParticipant {
   id: string
   name: string
   age: number | null
+  telegram_id: number | null
 }
 
 export async function fetchCircles(): Promise<DbCircle[]> {
   const { data, error } = await supabase
     .from('circles')
-    .select('id, kind, time_short, title, hint, place, price, seats, taken, tilt, bg, photo')
+    .select('id, kind, time_short, title, hint, place, price, seats, taken, tilt, bg, photo, gender_filter')
     .eq('is_active', true)
     .order('created_at')
   if (error) throw error
@@ -72,7 +76,7 @@ export async function fetchPastMeetups(): Promise<DbMeetup[]> {
 export async function fetchCircleById(id: string): Promise<DbCircle | null> {
   const { data, error } = await supabase
     .from('circles')
-    .select('id, kind, time_short, title, hint, place, price, seats, taken, tilt, bg, photo')
+    .select('id, kind, time_short, title, hint, place, price, seats, taken, tilt, bg, photo, gender_filter')
     .eq('id', id)
     .maybeSingle()
   if (error) throw error
@@ -142,13 +146,13 @@ export async function fetchUserBookings(userId: string): Promise<DbBookingWithMe
 export async function fetchMeetupParticipants(meetupId: string): Promise<DbParticipant[]> {
   const { data, error } = await supabase
     .from('bookings')
-    .select('user:user_id(id, name, age)')
+    .select('user:user_id(id, name, age, telegram_id)')
     .eq('meetup_id', meetupId)
   if (error) throw error
-  type Row = { user: { id: string; name: string; age: number | null } | { id: string; name: string; age: number | null }[] | null }
+  type Row = { user: DbParticipant | DbParticipant[] | null }
   return ((data ?? []) as unknown as Row[])
     .map((b) => (Array.isArray(b.user) ? b.user[0] : b.user))
-    .filter((u): u is { id: string; name: string; age: number | null } => u != null)
+    .filter((u): u is DbParticipant => u != null)
 }
 
 // Save post-event mood to a booking
@@ -158,6 +162,63 @@ export async function saveMoodToBooking(bookingId: string, mood: string): Promis
     .update({ mood })
     .eq('id', bookingId)
   if (error) throw error
+}
+
+// Save venue rating to a booking (1-5)
+export async function saveVenueRating(bookingId: string, rating: number): Promise<void> {
+  const { error } = await supabase
+    .from('bookings')
+    .update({ venue_rating: rating })
+    .eq('id', bookingId)
+  if (error) throw error
+}
+
+// Save "want to meet again" selections
+export async function saveMatchRequests(
+  fromUserId: string,
+  toUserIds: string[],
+  meetupId: string
+): Promise<void> {
+  if (!toUserIds.length) return
+  const rows = toUserIds.map((to) => ({
+    from_user_id: fromUserId,
+    to_user_id: to,
+    meetup_id: meetupId,
+  }))
+  const { error } = await supabase
+    .from('match_requests')
+    .upsert(rows, { onConflict: 'from_user_id,to_user_id,meetup_id' })
+  if (error) throw error
+}
+
+// Find mutual matches: others who also selected current user for this meetup
+export async function findMutualMatches(
+  userId: string,
+  meetupId: string
+): Promise<DbParticipant[]> {
+  // People current user selected
+  const { data: sent } = await supabase
+    .from('match_requests')
+    .select('to_user_id')
+    .eq('from_user_id', userId)
+    .eq('meetup_id', meetupId)
+
+  const sentIds = (sent ?? []).map((r) => r.to_user_id as string)
+  if (!sentIds.length) return []
+
+  // Of those, who also selected the current user?
+  const { data: mutual, error } = await supabase
+    .from('match_requests')
+    .select('user:from_user_id(id, name, age, telegram_id)')
+    .eq('to_user_id', userId)
+    .eq('meetup_id', meetupId)
+    .in('from_user_id', sentIds)
+
+  if (error) throw error
+  type Row = { user: DbParticipant | DbParticipant[] | null }
+  return ((mutual ?? []) as unknown as Row[])
+    .map((r) => (Array.isArray(r.user) ? r.user[0] : r.user))
+    .filter((u): u is DbParticipant => u != null)
 }
 
 // User profile stats derived from bookings

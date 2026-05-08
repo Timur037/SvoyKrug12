@@ -425,6 +425,25 @@ export function GroupScreen() {
           style={{
             marginTop: 12,
             width: '100%',
+            background: 'rgba(245,239,230,0.10)',
+            color: COLORS.cream,
+            border: '1px solid rgba(245,239,230,0.18)',
+            padding: '13px',
+            borderRadius: 99,
+            ...sansStyle,
+            fontSize: 14,
+            fontWeight: 600,
+            backdropFilter: 'blur(8px)',
+          }}
+          onClick={() => { haptic('light'); navigate('/games') }}
+        >
+          🎮 игры за столом
+        </button>
+
+        <button
+          style={{
+            marginTop: 12,
+            width: '100%',
             background: COLORS.tomato,
             color: COLORS.cream,
             border: 'none',

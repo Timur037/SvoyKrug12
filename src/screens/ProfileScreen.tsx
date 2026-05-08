@@ -1,4 +1,15 @@
 import { useState, useEffect, useRef, type CSSProperties } from 'react'
+
+const BUDGET_OPTIONS = [
+  { id: 'budget_1000',   label: 'до 1 000 ₽',  hint: 'кофейня, кафе' },
+  { id: 'budget_3000',   label: 'до 3 000 ₽',  hint: 'ресторан, хорошая кухня' },
+  { id: 'budget_5000',   label: 'до 5 000 ₽',  hint: 'атмосферное место, без спешки' },
+  { id: 'budget_premium',label: '5 000+ ₽',    hint: 'уровень без компромиссов' },
+] as const
+
+function budgetLabel(id: string): string {
+  return BUDGET_OPTIONS.find(o => o.id === id)?.label ?? 'не указан'
+}
 import { useNavigate } from 'react-router-dom'
 import { COLORS, RADII, serifStyle, sansStyle } from '../theme'
 import { Grain } from '../components/Grain'
@@ -73,6 +84,7 @@ interface SettingsState {
   districts: string[]
   weekdays: string[]
   paused: boolean
+  budget: string
 }
 
 const DEFAULT_SETTINGS: SettingsState = {
@@ -80,6 +92,7 @@ const DEFAULT_SETTINGS: SettingsState = {
   districts: ['центр', 'замоскворечье'],
   weekdays: ['чт', 'пт', 'сб'],
   paused: false,
+  budget: 'budget_3000',
 }
 
 function palette(k: StickerKind): { bg: string; c: string; br: string; shadow: string } {
@@ -216,14 +229,17 @@ export function ProfileScreen() {
   const [settings, setSettings] = useState<SettingsState>(() => {
     try {
       const saved = localStorage.getItem('svoy_krug_settings')
-      if (saved) return JSON.parse(saved) as SettingsState
+      const parsed = saved ? (JSON.parse(saved) as SettingsState) : DEFAULT_SETTINGS
+      // merge onboarding budget if not yet in settings
+      const onbBudget = localStorage.getItem('svoy_krug_budget')
+      return { ...DEFAULT_SETTINGS, ...parsed, budget: parsed.budget ?? onbBudget ?? DEFAULT_SETTINGS.budget }
     } catch {
-      // ignore parse/storage errors and fall back to defaults
+      const onbBudget = localStorage.getItem('svoy_krug_budget')
+      return { ...DEFAULT_SETTINGS, budget: onbBudget ?? DEFAULT_SETTINGS.budget }
     }
-    return DEFAULT_SETTINGS
   })
 
-  const [activeSheet, setActiveSheet] = useState<'districts' | 'weekdays' | null>(null)
+  const [activeSheet, setActiveSheet] = useState<'districts' | 'weekdays' | 'budget' | null>(null)
   const [districtSearch, setDistrictSearch] = useState('')
 
   function updateSettings(patch: Partial<SettingsState>) {
@@ -606,6 +622,16 @@ export function ProfileScreen() {
                   },
                 },
                 {
+                  key: 'budget',
+                  label: 'бюджет на вечер',
+                  value: budgetLabel(settings.budget),
+                  tomato: false,
+                  onTap: () => {
+                    haptic('light')
+                    setActiveSheet('budget')
+                  },
+                },
+                {
                   key: 'paused',
                   label: 'пауза',
                   value: settings.paused ? 'включена' : 'выключена',
@@ -884,6 +910,85 @@ export function ProfileScreen() {
               boxShadow: '0 8px 20px rgba(232,71,44,0.32)',
             }}
           >готово</button>
+        </div>
+      )}
+
+      {/* Budget bottom sheet */}
+      {activeSheet === 'budget' && (
+        <div style={{
+          position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 51,
+          background: '#fff',
+          borderRadius: '24px 24px 0 0',
+          padding: '20px 24px calc(env(safe-area-inset-bottom,0px) + 24px)',
+          boxShadow: '0 -8px 40px rgba(26,22,18,0.18)',
+          animation: 'sheetUp 300ms cubic-bezier(0.22,1,0.36,1) both',
+        }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(26,22,18,0.15)', margin: '0 auto 18px' }} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <div style={{ ...sansStyle, fontSize: 20, fontWeight: 700, color: COLORS.ink }}>бюджет на вечер</div>
+            <button
+              onClick={() => { haptic('light'); setActiveSheet(null) }}
+              aria-label="закрыть"
+              style={{
+                width: 32, height: 32, borderRadius: '50%',
+                background: 'rgba(26,22,18,0.06)', border: 'none',
+                ...sansStyle, fontSize: 18, color: COLORS.ink,
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >×</button>
+          </div>
+          <div style={{ ...sansStyle, fontSize: 13, color: COLORS.inkSoft, marginBottom: 18, lineHeight: 1.4 }}>
+            подберём места под ваш комфортный бюджет
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
+            {BUDGET_OPTIONS.map(({ id, label, hint }) => {
+              const selected = settings.budget === id
+              return (
+                <button
+                  key={id}
+                  onClick={() => {
+                    haptic('medium')
+                    updateSettings({ budget: id })
+                    try { localStorage.setItem('svoy_krug_budget', id) } catch { /* ignore */ }
+                    setTimeout(() => setActiveSheet(null), 180)
+                  }}
+                  style={{
+                    ...sansStyle,
+                    width: '100%',
+                    padding: '16px 18px',
+                    borderRadius: 16,
+                    background: selected ? COLORS.ink : 'rgba(26,22,18,0.04)',
+                    color: selected ? COLORS.cream : COLORS.ink,
+                    border: selected ? '1.5px solid transparent' : '1.5px solid rgba(26,22,18,0.08)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    cursor: 'pointer',
+                    transition: 'all 180ms ease',
+                    boxShadow: selected ? '0 8px 20px rgba(26,22,18,0.20)' : 'none',
+                    textAlign: 'left',
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: selected ? COLORS.cream : COLORS.ink }}>{label}</span>
+                    <span style={{ fontSize: 12, color: selected ? 'rgba(245,239,230,0.60)' : COLORS.inkSoft }}>{hint}</span>
+                  </div>
+                  {selected && (
+                    <span style={{
+                      width: 22, height: 22, borderRadius: '50%',
+                      background: COLORS.tomato, flexShrink: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                        <path d="M2 5.5l2.3 2.3L9 2.8" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
         </div>
       )}
 

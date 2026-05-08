@@ -34,6 +34,13 @@ import { PostEventScreen } from './screens/PostEventScreen'
 import { BuildCircleScreen } from './screens/BuildCircleScreen'
 import { CircleDetailScreen } from './screens/CircleDetailScreen'
 import { GroupChatScreen } from './screens/GroupChatScreen'
+import { FormatsScreen } from './screens/FormatsScreen'
+import { GamesScreen } from './screens/GamesScreen'
+import { BelieveItGame } from './screens/games/BelieveItGame'
+import { GuessWhoGame } from './screens/games/GuessWhoGame'
+import { MostLikelyGame } from './screens/games/MostLikelyGame'
+import { HotSeatGame } from './screens/games/HotSeatGame'
+import { StoryGame } from './screens/games/StoryGame'
 import { UserProvider } from './context/UserContext'
 import { posthog } from './lib/posthog'
 
@@ -83,6 +90,13 @@ export default function App() {
           <Route path="/group" element={<GroupScreen />} />
           <Route path="/circle" element={<CircleDetailScreen />} />
           <Route path="/chat" element={<GroupChatScreen />} />
+          <Route path="/formats" element={<FormatsScreen />} />
+          <Route path="/games" element={<GamesScreen />} />
+          <Route path="/games/believe-it" element={<BelieveItGame />} />
+          <Route path="/games/guess-who" element={<GuessWhoGame />} />
+          <Route path="/games/most-likely" element={<MostLikelyGame />} />
+          <Route path="/games/hot-seat" element={<HotSeatGame />} />
+          <Route path="/games/story" element={<StoryGame />} />
           <Route path="/waiting" element={<BreathingScreen />} />
           <Route path="/post-event" element={<PostEventScreen />} />
           <Route path="/build-circle" element={<BuildCircleScreen />} />

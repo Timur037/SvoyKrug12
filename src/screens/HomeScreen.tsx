@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { COLORS, SHADOWS, RADII, serifStyle, sansStyle, overlineStyle } from '../theme'
 import { Grain } from '../components/Grain'
 import { TabBar } from '../components/TabBar'
@@ -8,7 +8,7 @@ import { PriceChip } from '../components/PriceChip'
 import { PageTransition } from '../components/PageTransition'
 import { haptic } from '../lib/telegram'
 import { fetchCircles } from '../lib/db'
-import type { DbCircle } from '../lib/db'
+import type { DbCircle, GenderFilter } from '../lib/db'
 import { MOCK_CIRCLES } from '../lib/mockCircles'
 import { useUser } from '../context/UserContext'
 
@@ -38,12 +38,34 @@ function isToday(c: DbCircle): boolean {
   return t.includes('сегодня')
 }
 
+const GENDER_OPTIONS: { id: GenderFilter | 'all'; label: string }[] = [
+  { id: 'all',        label: 'все'       },
+  { id: 'mixed',      label: 'свой круг' },
+  { id: 'women_only', label: '♀ женский' },
+  { id: 'men_only',   label: '♂ мужской' },
+  { id: 'pairs',      label: '◎ пары'    },
+]
+
+const GENDER_BADGE: Record<string, { label: string; bg: string; color: string }> = {
+  women_only: { label: '♀ только женщины', bg: 'rgba(210,80,110,0.82)', color: '#fff' },
+  men_only:   { label: '♂ только мужчины', bg: 'rgba(50,100,195,0.82)', color: '#fff' },
+  pairs:      { label: '◎ вечер пар',      bg: 'rgba(178,112,44,0.82)', color: '#fff' },
+}
+
 export function HomeScreen() {
   const [activeCategory, setActiveCategory] = useState<string>('all')
+  const [genderFilter, setGenderFilter] = useState<GenderFilter | 'all'>('all')
   const [circles, setCircles] = useState<DbCircle[]>([])
   const [loaded, setLoaded] = useState<boolean>(false)
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useUser()
+
+  // Apply format filter passed from FormatsScreen
+  useEffect(() => {
+    const fmt = (location.state as { format?: GenderFilter } | null)?.format
+    if (fmt) setGenderFilter(fmt)
+  }, [location.state])
 
   useEffect(() => {
     fetchCircles()
@@ -51,9 +73,9 @@ export function HomeScreen() {
       .catch(() => { setCircles(MOCK_CIRCLES); setLoaded(true) })
   }, [])
 
-  const displayCircles = activeCategory === 'all'
-    ? circles
-    : circles.filter((c) => c.kind.includes(activeCategory))
+  const displayCircles = circles
+    .filter((c) => activeCategory === 'all' || c.kind.includes(activeCategory))
+    .filter((c) => genderFilter === 'all' || c.gender_filter === genderFilter)
 
   const greeting = getGreeting(user?.name ?? 'гость')
 
@@ -258,9 +280,92 @@ export function HomeScreen() {
           })}
         </div>
 
+        {/* ── Format filter toggle ── */}
+        <div style={{
+          paddingLeft: 22,
+          paddingRight: 22,
+          marginTop: 10,
+          marginBottom: 2,
+          position: 'relative',
+          zIndex: 2,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+        }}>
+          <div style={{
+            display: 'flex',
+            background: 'rgba(26,22,18,0.05)',
+            borderRadius: RADII.full,
+            padding: 3,
+            gap: 2,
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            flex: 1,
+          }}>
+            {GENDER_OPTIONS.map((opt) => {
+              const isActive = genderFilter === opt.id
+              let activeBg: string = COLORS.ink
+              let activeColor: string = COLORS.cream
+              if (opt.id === 'women_only') { activeBg = 'rgba(210,80,110,0.90)'; activeColor = '#fff' }
+              if (opt.id === 'men_only')   { activeBg = 'rgba(50,100,195,0.90)'; activeColor = '#fff' }
+              if (opt.id === 'pairs')      { activeBg = 'rgba(178,112,44,0.90)'; activeColor = '#fff' }
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => { haptic('light'); setGenderFilter(opt.id as GenderFilter | 'all') }}
+                  style={{
+                    WebkitAppearance: 'none',
+                    appearance: 'none',
+                    padding: '6px 12px',
+                    borderRadius: RADII.full,
+                    border: 'none',
+                    background: isActive ? activeBg : 'transparent',
+                    color: isActive ? activeColor : 'rgba(26,22,18,0.45)',
+                    ...sansStyle,
+                    fontSize: 12,
+                    fontWeight: isActive ? 700 : 500,
+                    cursor: 'pointer',
+                    transition: 'all 180ms cubic-bezier(0.22,1,0.36,1)',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    boxShadow: isActive ? '0 1px 4px rgba(0,0,0,0.18)' : 'none',
+                  }}
+                >
+                  {opt.label}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Formats info link */}
+          <button
+            onClick={() => { haptic('light'); navigate('/formats') }}
+            style={{
+              WebkitAppearance: 'none',
+              appearance: 'none',
+              flexShrink: 0,
+              width: 30,
+              height: 30,
+              borderRadius: RADII.full,
+              background: 'rgba(26,22,18,0.06)',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+            }}
+            aria-label="О форматах"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke={COLORS.inkSoft} strokeWidth="1.6"/>
+              <path d="M12 11v5M12 8h.01" stroke={COLORS.inkSoft} strokeWidth="1.8" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
+
         {/* ── Section label ── */}
         <div style={{
-          padding: '16px 26px 8px',
+          padding: '14px 26px 8px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -380,7 +485,7 @@ export function HomeScreen() {
                   justifyContent: 'space-between',
                 }}>
                   {/* Top badges */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
                     {today && (
                       <span style={{
                         ...sansStyle,
@@ -414,6 +519,21 @@ export function HomeScreen() {
                     }}>
                       {c.kind}
                     </span>
+                    {GENDER_BADGE[c.gender_filter] && (
+                      <span style={{
+                        ...sansStyle,
+                        padding: '5px 11px',
+                        borderRadius: RADII.full,
+                        background: GENDER_BADGE[c.gender_filter].bg,
+                        color: GENDER_BADGE[c.gender_filter].color,
+                        fontSize: 10,
+                        fontWeight: 700,
+                        letterSpacing: '0.08em',
+                        backdropFilter: 'blur(8px)',
+                      }}>
+                        {GENDER_BADGE[c.gender_filter].label}
+                      </span>
+                    )}
                     {almostFull && (
                       <span style={{
                         ...sansStyle,
