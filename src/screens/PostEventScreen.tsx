@@ -334,7 +334,7 @@ function PeopleStep({ participants, selected, onToggle, venueRating, setVenueRat
           <div style={{ ...sansStyle, fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: 'rgba(245,239,230,0.45)', textTransform: 'uppercase', marginBottom: 18 }}>
             оцените место
           </div>
-          <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 8 }}>
             {[1, 2, 3, 4, 5].map((star) => {
               const filled = star <= venueRating
               return (
@@ -342,26 +342,44 @@ function PeopleStep({ participants, selected, onToggle, venueRating, setVenueRat
                   key={star}
                   onClick={() => { haptic('light'); setVenueRating(star) }}
                   style={{
-                    background: 'none', border: 'none', padding: '4px 6px',
-                    cursor: 'pointer', lineHeight: 1,
-                    fontSize: 36,
-                    color: filled ? COLORS.honey : 'rgba(245,239,230,0.20)',
+                    flex: 1,
+                    padding: '18px 0',
+                    borderRadius: 16,
+                    border: 'none',
+                    background: filled ? 'rgba(244,201,93,0.15)' : 'rgba(245,239,230,0.06)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 6,
                     transition: 'all 200ms cubic-bezier(0.22,1,0.36,1)',
-                    transform: filled ? 'scale(1.15)' : 'scale(1)',
-                    filter: filled ? 'drop-shadow(0 2px 8px rgba(244,201,93,0.50))' : 'none',
+                    transform: filled ? 'scale(1.04)' : 'scale(1)',
                   }}
                   aria-label={`${star} звёзд`}
                 >
-                  ★
+                  <span style={{
+                    fontSize: 28,
+                    lineHeight: 1,
+                    color: filled ? COLORS.honey : 'rgba(245,239,230,0.20)',
+                    filter: filled ? 'drop-shadow(0 2px 8px rgba(244,201,93,0.55))' : 'none',
+                    transition: 'all 200ms ease',
+                  }}>★</span>
+                  <span style={{
+                    ...sansStyle,
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: filled ? 'rgba(244,201,93,0.70)' : 'rgba(245,239,230,0.18)',
+                    letterSpacing: '0.04em',
+                  }}>{star}</span>
                 </button>
               )
             })}
-            {venueRating > 0 && (
-              <span style={{ ...sansStyle, fontSize: 12, color: COLORS.honey, marginLeft: 8, fontWeight: 600 }}>
-                {['', 'плохо', 'так себе', 'нормально', 'хорошо', 'отлично'][venueRating]}
-              </span>
-            )}
           </div>
+          {venueRating > 0 && (
+            <div style={{ ...sansStyle, fontSize: 12, color: COLORS.honey, fontWeight: 600, marginTop: 10 }}>
+              {['', 'плохо', 'так себе', 'нормально', 'хорошо', 'отлично'][venueRating]}
+            </div>
+          )}
         </div>
 
         {/* CTA */}
