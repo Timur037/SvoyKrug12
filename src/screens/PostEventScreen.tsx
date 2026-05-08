@@ -33,6 +33,14 @@ const AVATAR_COLORS = [
   { bg: '#3264C3',      fg: COLORS.cream },
 ]
 
+const DEMO_PARTICIPANTS: DbParticipant[] = [
+  { id: 'demo-1', name: 'Маша',   age: 27, telegram_id: null },
+  { id: 'demo-2', name: 'Алексей',age: 31, telegram_id: null },
+  { id: 'demo-3', name: 'Саша',   age: 25, telegram_id: null },
+  { id: 'demo-4', name: 'Лена',   age: 29, telegram_id: null },
+  { id: 'demo-5', name: 'Игорь',  age: 34, telegram_id: null },
+]
+
 function getInitials(name: string) {
   const p = name.trim().split(/\s+/)
   return p.length >= 2
@@ -269,12 +277,17 @@ function PeopleStep({ participants, selected, onToggle, venueRating, setVenueRat
         </div>
 
         {/* Participant list */}
+        {(() => {
+          const isDemo = participants.length === 0
+          const list = isDemo ? DEMO_PARTICIPANTS : participants
+          return (
         <div style={{ marginTop: 30, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {participants.length === 0 ? (
-            <div style={{ ...sansStyle, fontSize: 14, color: 'rgba(245,239,230,0.40)', textAlign: 'center', padding: '32px 0' }}>
-              загружаем участников...
+          {isDemo && (
+            <div style={{ ...sansStyle, fontSize: 11, color: 'rgba(245,239,230,0.28)', letterSpacing: '0.08em', marginBottom: 4 }}>
+              демо — здесь будут реальные участники
             </div>
-          ) : participants.map((p, i) => {
+          )}
+          {list.map((p, i) => {
             const pal = AVATAR_COLORS[i % AVATAR_COLORS.length]!
             const isSel = selected.has(p.id)
             const firstName = p.name.split(' ')[0] ?? p.name
@@ -328,6 +341,8 @@ function PeopleStep({ participants, selected, onToggle, venueRating, setVenueRat
             )
           })}
         </div>
+          )
+        })()}
 
         {/* Venue rating */}
         <div style={{ marginTop: 36 }}>
@@ -366,11 +381,12 @@ function PeopleStep({ participants, selected, onToggle, venueRating, setVenueRat
                   }}>★</span>
                   <span style={{
                     ...sansStyle,
-                    fontSize: 10,
+                    fontSize: 9,
                     fontWeight: 600,
                     color: filled ? 'rgba(244,201,93,0.70)' : 'rgba(245,239,230,0.18)',
-                    letterSpacing: '0.04em',
-                  }}>{star}</span>
+                    letterSpacing: '0.02em',
+                    whiteSpace: 'nowrap',
+                  }}>{['ужасно','плохо','норм','хорошо','отлично'][star - 1]}</span>
                 </button>
               )
             })}
