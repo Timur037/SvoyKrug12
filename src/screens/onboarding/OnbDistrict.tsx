@@ -19,7 +19,7 @@ export function OnbDistrict() {
     haptic('medium')
     setPicked(val)
     try { localStorage.setItem('svoy_krug_district', val) } catch { /* ignore */ }
-    setTimeout(() => navigate('/onboarding/quiz1'), 240)
+    setTimeout(() => navigate('/onboarding/hobbies'), 240)
   }
 
   return (
