@@ -28,6 +28,8 @@ from .handlers import (
     handle_next_walk,
     handle_switch_to_restaurant,
 )
+from .booking_notifier import check_new_bookings
+from .report_notifier import send_report_notifications
 
 log = logging.getLogger(__name__)
 
@@ -147,15 +149,41 @@ def run_bot() -> None:
     """Start polling loop. Runs forever until interrupted."""
     log.info("Admin bot started (ADMIN_ID=%d)", ADMIN_ID)
 
-    # Send startup message to admin
     _tg("sendMessage",
         chat_id=ADMIN_ID,
         text="🤖 <b>Свой Круг Admin Bot запущен</b>\n\nКоманды:\n/status — статус системы",
         parse_mode="HTML")
 
     offset = 0
+    _last_booking_check = 0.0
+    _last_report_check  = 0.0
+    BOOKING_INTERVAL = 60       # seconds
+    REPORT_INTERVAL  = 5 * 60  # 5 minutes
+
     while True:
         try:
+            now = time.time()
+
+            # Periodic: new bookings
+            if now - _last_booking_check >= BOOKING_INTERVAL:
+                try:
+                    n = check_new_bookings()
+                    if n:
+                        log.info("Booking notifications sent: %d", n)
+                except Exception as e:
+                    log.error("check_new_bookings failed: %s", e)
+                _last_booking_check = now
+
+            # Periodic: reports / support
+            if now - _last_report_check >= REPORT_INTERVAL:
+                try:
+                    n = send_report_notifications()
+                    if n:
+                        log.info("Report notifications sent: %d", n)
+                except Exception as e:
+                    log.error("send_report_notifications failed: %s", e)
+                _last_report_check = now
+
             resp = _tg("getUpdates", offset=offset, timeout=30, allowed_updates=["message", "callback_query"])
             updates = resp.get("result") or []
 
