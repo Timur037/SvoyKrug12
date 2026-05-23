@@ -9,7 +9,7 @@ import { PageTransition } from '../components/PageTransition'
 import { haptic } from '../lib/telegram'
 import { fetchCircles, fetchUnreviewedPastBooking, submitReport } from '../lib/db'
 import type { DbCircle, GenderFilter, DbBookingWithMeetup } from '../lib/db'
-import { MOCK_CIRCLES } from '../lib/mockCircles'
+
 import { useUser } from '../context/UserContext'
 
 const CATEGORIES = [
@@ -85,8 +85,8 @@ export function HomeScreen() {
 
   useEffect(() => {
     fetchCircles()
-      .then((data) => { setCircles(data.length > 0 ? data : MOCK_CIRCLES); setLoaded(true) })
-      .catch(() => { setCircles(MOCK_CIRCLES); setLoaded(true) })
+      .then((data) => { setCircles(data); setLoaded(true) })
+      .catch(() => { setCircles([]); setLoaded(true) })
   }, [])
 
   useEffect(() => {
@@ -784,7 +784,11 @@ export function HomeScreen() {
               gap: 10,
             }}>
               <div style={{ ...serifStyle, fontSize: 22, color: COLORS.inkSoft }}>кругов пока нет</div>
-              <div style={{ ...sansStyle, fontSize: 13, color: COLORS.inkSoft }}>попробуйте другой формат</div>
+              <div style={{ ...sansStyle, fontSize: 13, color: COLORS.inkSoft }}>
+                {circles.length === 0
+                  ? 'скоро появятся новые встречи'
+                  : 'попробуйте другой формат'}
+              </div>
             </div>
           )}
         </div>
