@@ -37,6 +37,36 @@ function getLocalTelegramId(): number {
   return fake
 }
 
+interface DbUserRow {
+  id: string
+  telegram_id: number
+  name: string
+}
+
+// Find user by telegram_id. Never swallows SELECT errors silently.
+async function findByTid(telegramId: number): Promise<DbUserRow | null> {
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, telegram_id, name')
+    .eq('telegram_id', telegramId)
+    .maybeSingle()
+  if (error) {
+    console.error('findByTid SELECT failed:', error)
+    throw error
+  }
+  return (data as DbUserRow | null) ?? null
+}
+
+// Sync onboarding name to the DB row if it differs
+async function applyName(row: DbUserRow, customName: string | null): Promise<AppUser> {
+  localStorage.setItem('svoy_krug_user_id', row.id)
+  if (customName && customName !== row.name) {
+    await supabase.from('users').update({ name: customName }).eq('id', row.id)
+    return { id: row.id, telegramId: row.telegram_id, name: customName }
+  }
+  return { id: row.id, telegramId: row.telegram_id, name: row.name }
+}
+
 export async function upsertUser(): Promise<AppUser> {
   const tg = getTelegramUser()
   const telegramId = tg?.id ?? getLocalTelegramId()
@@ -46,22 +76,8 @@ export async function upsertUser(): Promise<AppUser> {
 
   try {
     // 1. Try to find existing user
-    const { data: existing } = await supabase
-      .from('users')
-      .select('id, telegram_id, name')
-      .eq('telegram_id', telegramId)
-      .maybeSingle()
-
-    if (existing) {
-      localStorage.setItem('svoy_krug_user_id', existing.id)
-      // Update name if user went through onboarding and changed it
-      const storedName = customName
-      if (storedName && storedName !== existing.name) {
-        await supabase.from('users').update({ name: storedName }).eq('id', existing.id)
-        return { id: existing.id, telegramId: existing.telegram_id, name: storedName }
-      }
-      return { id: existing.id, telegramId: existing.telegram_id, name: existing.name }
-    }
+    const existing = await findByTid(telegramId)
+    if (existing) return await applyName(existing, customName)
 
     // 2. Create new user
     const { data: created, error } = await supabase
@@ -70,10 +86,17 @@ export async function upsertUser(): Promise<AppUser> {
       .select('id, telegram_id, name')
       .single()
 
-    if (error) throw error
+    if (!error && created) {
+      localStorage.setItem('svoy_krug_user_id', created.id)
+      return { id: created.id, telegramId: created.telegram_id, name: created.name }
+    }
 
-    localStorage.setItem('svoy_krug_user_id', created.id)
-    return { id: created.id, telegramId: created.telegram_id, name: created.name }
+    // 3. INSERT lost a race (409: row with this telegram_id already exists) —
+    // re-SELECT and recover the real row instead of a local fallback
+    console.warn('upsertUser INSERT failed, re-selecting by telegram_id:', error)
+    const recovered = await findByTid(telegramId)
+    if (recovered) return await applyName(recovered, customName)
+    throw error
 
   } catch (err) {
     console.error('upsertUser failed, using local fallback:', err)

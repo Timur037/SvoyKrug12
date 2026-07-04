@@ -143,16 +143,21 @@ export async function fetchUserBookings(userId: string): Promise<DbBookingWithMe
   return (data ?? []) as unknown as DbBookingWithMeetup[]
 }
 
+// Two-step query: bookings.user_id has no FK, so PostgREST embeds fail with PGRST200
 export async function fetchMeetupParticipants(meetupId: string): Promise<DbParticipant[]> {
-  const { data, error } = await supabase
+  const { data: rows, error } = await supabase
     .from('bookings')
-    .select('user:user_id(id, name, age, telegram_id)')
+    .select('user_id')
     .eq('meetup_id', meetupId)
   if (error) throw error
-  type Row = { user: DbParticipant | DbParticipant[] | null }
-  return ((data ?? []) as unknown as Row[])
-    .map((b) => (Array.isArray(b.user) ? b.user[0] : b.user))
-    .filter((u): u is DbParticipant => u != null)
+  const ids = (rows ?? []).map((r) => r.user_id as string)
+  if (!ids.length) return []
+  const { data: users, error: uErr } = await supabase
+    .from('users')
+    .select('id, name, age, telegram_id')
+    .in('id', ids)
+  if (uErr) throw uErr
+  return (users ?? []) as DbParticipant[]
 }
 
 // Submit a support report / complaint
@@ -217,7 +222,8 @@ export async function saveMatchRequests(
   if (error) throw error
 }
 
-// Find mutual matches: others who also selected current user for this meetup
+// Find mutual matches: others who also selected current user for this meetup.
+// Two-step query — match_requests.from_user_id has no FK for PostgREST embeds.
 export async function findMutualMatches(
   userId: string,
   meetupId: string
@@ -235,16 +241,46 @@ export async function findMutualMatches(
   // Of those, who also selected the current user?
   const { data: mutual, error } = await supabase
     .from('match_requests')
-    .select('user:from_user_id(id, name, age, telegram_id)')
+    .select('from_user_id')
     .eq('to_user_id', userId)
     .eq('meetup_id', meetupId)
     .in('from_user_id', sentIds)
-
   if (error) throw error
-  type Row = { user: DbParticipant | DbParticipant[] | null }
-  return ((mutual ?? []) as unknown as Row[])
-    .map((r) => (Array.isArray(r.user) ? r.user[0] : r.user))
-    .filter((u): u is DbParticipant => u != null)
+
+  const mutualIds = (mutual ?? []).map((r) => r.from_user_id as string)
+  if (!mutualIds.length) return []
+  const { data: users, error: uErr } = await supabase
+    .from('users')
+    .select('id, name, age, telegram_id')
+    .in('id', mutualIds)
+  if (uErr) throw uErr
+  return (users ?? []) as DbParticipant[]
+}
+
+// Second circle: get-or-create the follow-up meetup for a past one (same table, same crew)
+export interface SecondCircle {
+  meetup: DbMeetup
+  alreadyBooked: boolean
+}
+
+export async function fetchSecondCircle(
+  userId: string,
+  parentMeetupId: string
+): Promise<SecondCircle | null> {
+  const { data: childId, error } = await supabase.rpc('ensure_second_circle', {
+    p_parent: parentMeetupId,
+  })
+  if (error) throw error
+  if (!childId) return null
+  const { data: meetup, error: mErr } = await supabase
+    .from('meetups')
+    .select('id, circle_id, title, place, date_label, scheduled_at, seats, taken, mood, status, photo')
+    .eq('id', childId as string)
+    .maybeSingle()
+  if (mErr) throw mErr
+  if (!meetup) return null
+  const bookingId = await fetchBooking(userId, childId as string)
+  return { meetup: meetup as DbMeetup, alreadyBooked: bookingId != null }
 }
 
 // User profile stats derived from bookings

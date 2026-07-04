@@ -7,12 +7,15 @@ import { useUser } from '../context/UserContext'
 import {
   fetchBooking,
   fetchMeetupParticipants,
+  fetchSecondCircle,
+  bookMeetup,
   saveMoodToBooking,
   saveVenueRating,
   saveMatchRequests,
   findMutualMatches,
   submitReport,
   type DbParticipant,
+  type DbMeetup,
 } from '../lib/db'
 
 type Step = 'mood' | 'people' | 'result'
@@ -68,6 +71,9 @@ export function PostEventScreen() {
   const [mutualMatches, setMutualMatches] = useState<DbParticipant[]>([])
   const [bookingId, setBookingId]     = useState<string | null>(null)
   const [saving, setSaving]           = useState(false)
+  const [secondCircle, setSecondCircle]   = useState<DbMeetup | null>(null)
+  const [secondBooked, setSecondBooked]   = useState(false)
+  const [secondBooking, setSecondBooking] = useState(false)
 
   const meetupId = (() => {
     try { return localStorage.getItem('svoy_krug_review_meetup') } catch { return null }
@@ -79,7 +85,28 @@ export function PostEventScreen() {
     fetchMeetupParticipants(meetupId)
       .then((all) => setParticipants(all.filter((p) => p.id !== user.id)))
       .catch(console.error)
+    fetchSecondCircle(user.id, meetupId)
+      .then((sc) => {
+        if (!sc) return
+        setSecondCircle(sc.meetup)
+        setSecondBooked(sc.alreadyBooked)
+      })
+      .catch(console.error)
   }, [user, meetupId])
+
+  async function bookSecond() {
+    if (!user || !secondCircle || secondBooked || secondBooking) return
+    haptic('medium')
+    setSecondBooking(true)
+    try {
+      await bookMeetup(user.id, secondCircle.id)
+      setSecondBooked(true)
+    } catch (e) {
+      console.error('bookSecond failed', e)
+    } finally {
+      setSecondBooking(false)
+    }
+  }
 
   function toggle(id: string) {
     haptic('light')
@@ -120,7 +147,9 @@ export function PostEventScreen() {
              venueRating={venueRating} setVenueRating={setVenueRating}
              saving={saving} onFinish={finish}
              userId={user?.id ?? null} meetupId={meetupId} />
-  return <ResultStep mutualMatches={mutualMatches} onHome={() => navigate('/home')} />
+  return <ResultStep mutualMatches={mutualMatches} onHome={() => navigate('/home')}
+           secondCircle={secondCircle} secondBooked={secondBooked}
+           secondBooking={secondBooking} onBookSecond={bookSecond} />
 }
 
 // ── Step 1: Mood ──────────────────────────────────────────────────────
@@ -130,18 +159,18 @@ function MoodStep({ moodId, setMoodId, onNext }: {
   const active = MOODS.find((m) => m.id === moodId)
 
   return (
-    <div style={{ position: 'relative', width: '100%', minHeight: '100dvh', background: COLORS.cream, color: COLORS.ink, overflowX: 'hidden' }}>
+    <div style={{ position: 'relative', width: '100%', minHeight: '100dvh', background: COLORS.ink, color: COLORS.cream, overflowX: 'hidden' }}>
       <style>{`
         @keyframes fadeUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
         @keyframes moodPop { 0%{transform:scale(1)} 40%{transform:scale(1.08)} 100%{transform:scale(1)} }
       `}</style>
-      <Grain opacity={0.28} />
+      <Grain opacity={0.32} />
 
-      {/* Warm glow */}
+      {/* Top honey glow */}
       <div style={{
-        position: 'absolute', top: -40, left: '50%', transform: 'translateX(-50%)',
-        width: 500, height: 380,
-        background: 'radial-gradient(ellipse at center, rgba(244,201,93,0.45) 0%, rgba(232,71,44,0.10) 45%, transparent 72%)',
+        position: 'absolute', top: -60, left: '50%', transform: 'translateX(-50%)',
+        width: 440, height: 320,
+        background: 'radial-gradient(ellipse at center, rgba(244,201,93,0.22) 0%, transparent 70%)',
         pointerEvents: 'none', zIndex: 0,
       }} />
 
@@ -150,19 +179,19 @@ function MoodStep({ moodId, setMoodId, onNext }: {
         {/* Progress bar */}
         <div style={{ display: 'flex', gap: 5, marginBottom: 40 }}>
           {[0, 1].map((i) => (
-            <div key={i} style={{ flex: 1, height: 3, borderRadius: 99, background: i === 0 ? COLORS.tomato : 'rgba(26,22,18,0.10)', transition: 'background 300ms' }} />
+            <div key={i} style={{ flex: 1, height: 3, borderRadius: 99, background: i === 0 ? COLORS.tomato : 'rgba(245,239,230,0.12)', transition: 'background 300ms' }} />
           ))}
         </div>
 
         {/* Headline */}
         <div style={{ animation: 'fadeUp 500ms cubic-bezier(0.22,1,0.36,1) both' }}>
-          <div style={{ ...sansStyle, fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: COLORS.tomato, textTransform: 'uppercase', marginBottom: 10 }}>
+          <div style={{ ...sansStyle, fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: COLORS.honey, textTransform: 'uppercase', marginBottom: 10 }}>
             тот вечер
           </div>
           <h1 style={{ ...serifStyle, margin: '0 0 6px', fontSize: 48, lineHeight: 0.96, letterSpacing: '-0.025em' }}>
             каким он был?
           </h1>
-          <p style={{ ...sansStyle, fontSize: 14, color: COLORS.inkSoft, marginTop: 12, lineHeight: 1.55 }}>
+          <p style={{ ...sansStyle, fontSize: 14, color: 'rgba(245,239,230,0.55)', marginTop: 12, lineHeight: 1.55 }}>
             один штрих — и круг закроется.
           </p>
         </div>
@@ -178,9 +207,9 @@ function MoodStep({ moodId, setMoodId, onNext }: {
                 style={{
                   display: 'flex', alignItems: 'center', gap: 16,
                   padding: '16px 18px', borderRadius: 20,
-                  background: isActive ? COLORS.ink : '#fff',
-                  border: `1.5px solid ${isActive ? 'transparent' : 'rgba(26,22,18,0.07)'}`,
-                  boxShadow: isActive ? '0 8px 24px rgba(26,22,18,0.18)' : '0 2px 8px rgba(26,22,18,0.05)',
+                  background: isActive ? 'rgba(232,71,44,0.14)' : 'rgba(245,239,230,0.06)',
+                  border: `1.5px solid ${isActive ? 'rgba(232,71,44,0.40)' : 'rgba(245,239,230,0.10)'}`,
+                  boxShadow: isActive ? '0 8px 24px rgba(26,22,18,0.30)' : 'none',
                   transform: isActive ? 'scale(1.02)' : 'scale(1)',
                   transition: 'all 220ms cubic-bezier(0.22,1,0.36,1)',
                   cursor: 'pointer', textAlign: 'left',
@@ -189,10 +218,10 @@ function MoodStep({ moodId, setMoodId, onNext }: {
               >
                 <span style={{ fontSize: 28, lineHeight: 1, flexShrink: 0 }}>{m.emoji}</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ ...sansStyle, fontSize: 15, fontWeight: 700, color: isActive ? COLORS.cream : COLORS.ink }}>
+                  <div style={{ ...sansStyle, fontSize: 15, fontWeight: 700, color: COLORS.cream }}>
                     {m.label}
                   </div>
-                  <div style={{ ...sansStyle, fontSize: 12, color: isActive ? 'rgba(245,239,230,0.55)' : COLORS.inkSoft, marginTop: 2 }}>
+                  <div style={{ ...sansStyle, fontSize: 12, color: isActive ? 'rgba(245,239,230,0.70)' : 'rgba(245,239,230,0.45)', marginTop: 2 }}>
                     {m.sub}
                   </div>
                 </div>
@@ -210,8 +239,8 @@ function MoodStep({ moodId, setMoodId, onNext }: {
 
         {/* Selected mood hint */}
         {active && (
-          <div style={{ ...sansStyle, fontSize: 13, color: COLORS.inkSoft, textAlign: 'center', marginTop: 20, marginBottom: 8, animation: 'fadeUp 300ms ease both' }}>
-            вы выбрали: <span style={{ color: COLORS.ink, fontWeight: 600 }}>{active.emoji} {active.label}</span>
+          <div style={{ ...sansStyle, fontSize: 13, color: 'rgba(245,239,230,0.45)', textAlign: 'center', marginTop: 20, marginBottom: 8, animation: 'fadeUp 300ms ease both' }}>
+            вы выбрали: <span style={{ color: COLORS.cream, fontWeight: 600 }}>{active.emoji} {active.label}</span>
           </div>
         )}
 
@@ -375,7 +404,7 @@ function PeopleStep({ participants, selected, onToggle, venueRating, setVenueRat
           <div style={{ ...sansStyle, fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: 'rgba(245,239,230,0.45)', textTransform: 'uppercase', marginBottom: 18 }}>
             оцените место
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 10 }}>
             {[1, 2, 3, 4, 5].map((star) => {
               const filled = star <= venueRating
               return (
@@ -394,7 +423,6 @@ function PeopleStep({ participants, selected, onToggle, venueRating, setVenueRat
                     alignItems: 'center',
                     gap: 6,
                     transition: 'all 200ms cubic-bezier(0.22,1,0.36,1)',
-                    transform: filled ? 'scale(1.04)' : 'scale(1)',
                   }}
                   aria-label={`${star} звёзд`}
                 >
@@ -402,7 +430,6 @@ function PeopleStep({ participants, selected, onToggle, venueRating, setVenueRat
                     fontSize: 28,
                     lineHeight: 1,
                     color: filled ? COLORS.honey : 'rgba(245,239,230,0.20)',
-                    filter: filled ? 'drop-shadow(0 2px 8px rgba(244,201,93,0.55))' : 'none',
                     transition: 'all 200ms ease',
                   }}>★</span>
                   <span style={{
@@ -567,9 +594,13 @@ function PeopleStep({ participants, selected, onToggle, venueRating, setVenueRat
 }
 
 // ── Step 3: Result ────────────────────────────────────────────────────
-function ResultStep({ mutualMatches, onHome }: {
+function ResultStep({ mutualMatches, onHome, secondCircle, secondBooked, secondBooking, onBookSecond }: {
   mutualMatches: DbParticipant[]
   onHome: () => void
+  secondCircle: DbMeetup | null
+  secondBooked: boolean
+  secondBooking: boolean
+  onBookSecond: () => void
 }) {
   const hasMutual = mutualMatches.length > 0
 
@@ -657,21 +688,71 @@ function ResultStep({ mutualMatches, onHome }: {
           </div>
         )}
 
-        {/* Next circle nudge */}
-        <div style={{
-          padding: '20px 22px', borderRadius: 20,
-          background: 'rgba(245,239,230,0.07)',
-          border: '1px solid rgba(245,239,230,0.10)',
-          textAlign: 'center', marginBottom: 24,
-          animation: 'fadeUp 500ms cubic-bezier(0.22,1,0.36,1) 350ms both',
-        }}>
-          <div style={{ ...serifStyle, fontSize: 22, color: COLORS.cream, lineHeight: 1.2, marginBottom: 6 }}>
-            следующий круг<br />собирается уже скоро.
+        {/* Second circle: same table gathers again, 1-tap booking */}
+        {secondCircle ? (
+          <div style={{
+            padding: '22px', borderRadius: 20,
+            background: 'rgba(244,201,93,0.10)',
+            border: '1.5px solid rgba(244,201,93,0.30)',
+            textAlign: 'center', marginBottom: 24,
+            animation: 'fadeUp 500ms cubic-bezier(0.22,1,0.36,1) 350ms both',
+          }}>
+            <div style={{ ...sansStyle, fontSize: 11, fontWeight: 700, letterSpacing: '0.16em', color: COLORS.honey, textTransform: 'uppercase', marginBottom: 10 }}>
+              ↻ второй круг
+            </div>
+            <div style={{ ...serifStyle, fontSize: 22, color: COLORS.cream, lineHeight: 1.2, marginBottom: 8 }}>
+              ваш стол собирается<br />снова.
+            </div>
+            <div style={{ ...sansStyle, fontSize: 13, color: 'rgba(245,239,230,0.65)', marginBottom: 4 }}>
+              {secondCircle.date_label}
+            </div>
+            <div style={{ ...sansStyle, fontSize: 12, color: 'rgba(244,201,93,0.75)', marginBottom: 16 }}>
+              те же люди · {secondCircle.place}
+            </div>
+            {secondBooked ? (
+              <div style={{
+                padding: '14px', borderRadius: 99,
+                background: 'rgba(45,74,62,0.45)',
+                border: '1px solid rgba(45,74,62,0.70)',
+                ...sansStyle, fontSize: 14, fontWeight: 700, color: COLORS.cream,
+              }}>
+                ✓ вы записаны
+              </div>
+            ) : (
+              <button
+                disabled={secondBooking}
+                onClick={onBookSecond}
+                style={{
+                  width: '100%',
+                  background: secondBooking ? 'rgba(244,201,93,0.30)' : COLORS.honey,
+                  color: COLORS.ink, border: 'none',
+                  padding: '14px', borderRadius: 99,
+                  ...sansStyle, fontSize: 14, fontWeight: 700,
+                  boxShadow: secondBooking ? 'none' : '0 10px 24px rgba(244,201,93,0.28)',
+                  cursor: secondBooking ? 'default' : 'pointer',
+                  transition: 'all 250ms',
+                }}
+              >
+                {secondBooking ? 'бронируем...' : 'забронировать второй круг'}
+              </button>
+            )}
           </div>
-          <div style={{ ...sansStyle, fontSize: 12, color: 'rgba(245,239,230,0.45)' }}>
-            записывайтесь — пока есть места.
+        ) : (
+          <div style={{
+            padding: '20px 22px', borderRadius: 20,
+            background: 'rgba(245,239,230,0.07)',
+            border: '1px solid rgba(245,239,230,0.10)',
+            textAlign: 'center', marginBottom: 24,
+            animation: 'fadeUp 500ms cubic-bezier(0.22,1,0.36,1) 350ms both',
+          }}>
+            <div style={{ ...serifStyle, fontSize: 22, color: COLORS.cream, lineHeight: 1.2, marginBottom: 6 }}>
+              следующий круг<br />собирается уже скоро.
+            </div>
+            <div style={{ ...sansStyle, fontSize: 12, color: 'rgba(245,239,230,0.45)' }}>
+              записывайтесь — пока есть места.
+            </div>
           </div>
-        </div>
+        )}
 
         {/* CTA */}
         <button

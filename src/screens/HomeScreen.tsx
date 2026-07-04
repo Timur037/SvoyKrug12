@@ -9,6 +9,7 @@ import { PageTransition } from '../components/PageTransition'
 import { haptic } from '../lib/telegram'
 import { fetchCircles, fetchUnreviewedPastBooking, submitReport } from '../lib/db'
 import type { DbCircle, GenderFilter, DbBookingWithMeetup } from '../lib/db'
+import { EARLY_STAGE, EARLY_KINDS, FLAGS } from '../config/flags'
 
 import { useUser } from '../context/UserContext'
 
@@ -106,6 +107,7 @@ export function HomeScreen() {
 
   const displayCircles = circles
     .filter((c) => VALID_KINDS.some((k) => c.kind.includes(k)))
+    .filter((c) => !EARLY_STAGE || EARLY_KINDS.some((k) => c.kind.includes(k)))
     .filter((c) => activeCategory === 'all' || c.kind.includes(activeCategory))
     .filter((c) => genderFilter === 'all' || c.gender_filter === genderFilter)
 
@@ -264,6 +266,7 @@ export function HomeScreen() {
         </div>
 
         {/* ── Category filter ── */}
+        {FLAGS.showFormatCategories && (
         <div style={{
           display: 'flex',
           gap: 6,
@@ -324,8 +327,10 @@ export function HomeScreen() {
             )
           })}
         </div>
+        )}
 
         {/* ── Format filter toggle ── */}
+        {FLAGS.showGenderFilters && (
         <div style={{
           paddingLeft: 22,
           paddingRight: 22,
@@ -423,6 +428,7 @@ export function HomeScreen() {
           </div>
         )}
         </div>
+        )}
 
         {/* ── Unreviewed past meetup banner ── */}
         {unreviewedBooking && !reviewDismissed && (
@@ -794,6 +800,7 @@ export function HomeScreen() {
         </div>
 
         {/* ── FAB ── */}
+        {FLAGS.showBuildCircle && (
         <button
           onClick={() => { haptic('medium'); navigate('/build-circle') }}
           aria-label="Предложить вечер"
@@ -820,6 +827,7 @@ export function HomeScreen() {
             <path d="M12 5v14M5 12h14" stroke={COLORS.cream} strokeWidth="2.2" strokeLinecap="round" />
           </svg>
         </button>
+        )}
 
         <TabBar active="home" notifDot />
 
