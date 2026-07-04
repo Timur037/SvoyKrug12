@@ -283,6 +283,48 @@ export async function fetchSecondCircle(
   return { meetup: meetup as DbMeetup, alreadyBooked: bookingId != null }
 }
 
+// ── Coins (внутренняя валюта) ────────────────────────────────────────
+export type CoinReason =
+  | 'welcome' | 'referral' | 'second_circle'
+  | 'guarantee_hold' | 'guarantee_release' | 'admin' | 'spend'
+
+export interface DbCoinTransaction {
+  id: string
+  amount: number
+  reason: CoinReason
+  meetup_id: string | null
+  note: string | null
+  created_at: string
+}
+
+// Idempotent welcome bonus; returns the current balance
+export async function ensureWelcomeBonus(userId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('ensure_welcome_bonus', { p_user: userId })
+  if (error) throw error
+  return (data as number) ?? 0
+}
+
+export async function fetchCoinBalance(userId: string): Promise<number> {
+  const { data, error } = await supabase
+    .from('v_coin_balances')
+    .select('balance')
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (error) throw error
+  return data?.balance ?? 0
+}
+
+export async function fetchCoinTransactions(userId: string): Promise<DbCoinTransaction[]> {
+  const { data, error } = await supabase
+    .from('coin_transactions')
+    .select('id, amount, reason, meetup_id, note, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(50)
+  if (error) throw error
+  return (data ?? []) as DbCoinTransaction[]
+}
+
 // User profile stats derived from bookings
 export interface UserProfile {
   totalBookings: number

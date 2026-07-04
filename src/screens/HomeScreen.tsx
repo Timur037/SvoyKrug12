@@ -7,7 +7,7 @@ import { Seats } from '../components/Seats'
 import { PriceChip } from '../components/PriceChip'
 import { PageTransition } from '../components/PageTransition'
 import { haptic } from '../lib/telegram'
-import { fetchCircles, fetchUnreviewedPastBooking, fetchUserBookings, fetchSecondCircle, bookMeetup, submitReport } from '../lib/db'
+import { fetchCircles, fetchUnreviewedPastBooking, fetchUserBookings, fetchSecondCircle, bookMeetup, ensureWelcomeBonus, submitReport } from '../lib/db'
 import type { DbCircle, DbMeetup, GenderFilter, DbBookingWithMeetup } from '../lib/db'
 import { EARLY_STAGE, EARLY_KINDS, FLAGS } from '../config/flags'
 
@@ -70,6 +70,7 @@ export function HomeScreen() {
   const [loaded, setLoaded] = useState<boolean>(false)
   const [unreviewedBooking, setUnreviewedBooking] = useState<DbBookingWithMeetup | null | undefined>(undefined)
   const [reviewDismissed, setReviewDismissed] = useState(false)
+  const [coinBalance, setCoinBalance] = useState<number | null>(null)
   const [secondCircle, setSecondCircle] = useState<DbMeetup | null>(null)
   const [scBooked, setScBooked] = useState(false)
   const [scBooking, setScBooking] = useState(false)
@@ -99,6 +100,12 @@ export function HomeScreen() {
     fetchUnreviewedPastBooking(user.id)
       .then(setUnreviewedBooking)
       .catch(() => setUnreviewedBooking(null))
+  }, [user])
+
+  // Welcome bonus (idempotent) + coin balance
+  useEffect(() => {
+    if (!user) return
+    ensureWelcomeBonus(user.id).then(setCoinBalance).catch(console.error)
   }, [user])
 
   // Second circle banner: latest past booking → get-or-create its follow-up meetup
@@ -294,6 +301,23 @@ export function HomeScreen() {
             }}>
               <span style={{ ...sansStyle, fontSize: 12, fontWeight: 600, color: COLORS.inkSoft }}>📍 Москва</span>
             </div>
+
+            {coinBalance !== null && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+                background: 'rgba(244,201,93,0.16)',
+                border: '1px solid rgba(196,152,32,0.25)',
+                borderRadius: RADII.full,
+                padding: '7px 13px',
+                boxShadow: SHADOWS.chip,
+              }}>
+                <span style={{ ...sansStyle, fontSize: 12, fontWeight: 700, color: '#8A6A16' }}>
+                  ⛁ {coinBalance}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
