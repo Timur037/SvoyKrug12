@@ -7,8 +7,8 @@ import { Seats } from '../components/Seats'
 import { PriceChip } from '../components/PriceChip'
 import { PageTransition } from '../components/PageTransition'
 import { haptic } from '../lib/telegram'
-import { fetchCircles, fetchUnreviewedPastBooking, submitReport } from '../lib/db'
-import type { DbCircle, GenderFilter, DbBookingWithMeetup } from '../lib/db'
+import { fetchCircles, fetchUnreviewedPastBooking, fetchUserBookings, fetchSecondCircle, bookMeetup, submitReport } from '../lib/db'
+import type { DbCircle, DbMeetup, GenderFilter, DbBookingWithMeetup } from '../lib/db'
 import { EARLY_STAGE, EARLY_KINDS, FLAGS } from '../config/flags'
 
 import { useUser } from '../context/UserContext'
@@ -70,6 +70,10 @@ export function HomeScreen() {
   const [loaded, setLoaded] = useState<boolean>(false)
   const [unreviewedBooking, setUnreviewedBooking] = useState<DbBookingWithMeetup | null | undefined>(undefined)
   const [reviewDismissed, setReviewDismissed] = useState(false)
+  const [secondCircle, setSecondCircle] = useState<DbMeetup | null>(null)
+  const [scBooked, setScBooked] = useState(false)
+  const [scBooking, setScBooking] = useState(false)
+  const [scDismissed, setScDismissed] = useState(false)
   const [showSupport, setShowSupport] = useState(false)
   const [supportText, setSupportText] = useState('')
   const [supportSent, setSupportSent] = useState(false)
@@ -96,6 +100,34 @@ export function HomeScreen() {
       .then(setUnreviewedBooking)
       .catch(() => setUnreviewedBooking(null))
   }, [user])
+
+  // Second circle banner: latest past booking → get-or-create its follow-up meetup
+  useEffect(() => {
+    if (!user) return
+    fetchUserBookings(user.id)
+      .then(async (bookings) => {
+        const past = bookings.find((b) => b.meetup.status === 'past')
+        if (!past) return
+        const sc = await fetchSecondCircle(user.id, past.meetup.id)
+        if (!sc || sc.meetup.status !== 'upcoming' || sc.alreadyBooked) return
+        setSecondCircle(sc.meetup)
+      })
+      .catch(console.error)
+  }, [user])
+
+  async function bookSecondCircle() {
+    if (!user || !secondCircle || scBooked || scBooking) return
+    haptic('medium')
+    setScBooking(true)
+    try {
+      await bookMeetup(user.id, secondCircle.id)
+      setScBooked(true)
+    } catch (e) {
+      console.error('bookSecondCircle failed', e)
+    } finally {
+      setScBooking(false)
+    }
+  }
 
   const userGender = (() => { try { return localStorage.getItem('svoy_krug_gender') ?? '' } catch { return '' } })()
 
@@ -510,6 +542,97 @@ export function HomeScreen() {
                   <path d="M5 12h14M13 6l6 6-6 6" stroke={COLORS.ink} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Second circle banner: same table gathers again ── */}
+        {secondCircle && !scDismissed && (unreviewedBooking === null || reviewDismissed) && (
+          <div style={{
+            margin: '10px 20px 0',
+            borderRadius: 20,
+            overflow: 'hidden',
+            position: 'relative',
+            zIndex: 2,
+            background: COLORS.ink,
+            boxShadow: '0 4px 20px rgba(26,22,18,0.14)',
+            animation: 'cardIn 400ms cubic-bezier(0.22,1,0.36,1) both',
+          }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(244,201,93,0.18) 0%, transparent 60%)' }} />
+
+            <div style={{ position: 'relative', zIndex: 2, padding: '16px 18px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {/* Top row */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{
+                  ...sansStyle, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em',
+                  textTransform: 'uppercase', color: COLORS.honey,
+                }}>
+                  ↻ второй круг
+                </span>
+                {!scBooked && (
+                  <button
+                    onClick={() => { haptic('light'); setScDismissed(true) }}
+                    style={{ background: 'transparent', border: 'none', color: 'rgba(245,239,230,0.50)', fontSize: 18, cursor: 'pointer', padding: '0 2px', lineHeight: 1 }}
+                    aria-label="закрыть"
+                  >×</button>
+                )}
+              </div>
+
+              {/* Title */}
+              <div>
+                <div style={{ ...serifStyle, fontSize: 24, color: COLORS.cream, lineHeight: 1.05, marginBottom: 4 }}>
+                  ваш стол собирается снова.
+                </div>
+                <div style={{ ...sansStyle, fontSize: 12, color: 'rgba(245,239,230,0.60)' }}>
+                  {secondCircle.date_label} · те же люди · {secondCircle.place}
+                </div>
+              </div>
+
+              {/* CTA */}
+              {scBooked ? (
+                <div style={{
+                  ...sansStyle,
+                  alignSelf: 'flex-start',
+                  padding: '10px 20px',
+                  borderRadius: 999,
+                  background: 'rgba(45,74,62,0.55)',
+                  border: '1px solid rgba(45,74,62,0.80)',
+                  color: COLORS.cream,
+                  fontSize: 13,
+                  fontWeight: 700,
+                }}>
+                  ✓ вы записаны
+                </div>
+              ) : (
+                <button
+                  disabled={scBooking}
+                  onClick={bookSecondCircle}
+                  style={{
+                    ...sansStyle,
+                    alignSelf: 'flex-start',
+                    padding: '10px 20px',
+                    borderRadius: 999,
+                    background: scBooking ? 'rgba(244,201,93,0.35)' : COLORS.honey,
+                    color: COLORS.ink,
+                    border: 'none',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: scBooking ? 'default' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    boxShadow: scBooking ? 'none' : '0 4px 14px rgba(244,201,93,0.30)',
+                    transition: 'all 250ms',
+                  }}
+                >
+                  {scBooking ? 'бронируем...' : 'забронировать второй круг'}
+                  {!scBooking && (
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                      <path d="M5 12h14M13 6l6 6-6 6" stroke={COLORS.ink} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         )}
